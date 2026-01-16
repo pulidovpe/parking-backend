@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import prisma from './config/database';
 
 export async function buildApp() {
   const app = Fastify({
@@ -24,6 +25,24 @@ export async function buildApp() {
   // Health check route
   app.get('/health', async () => {
     return { status: 'ok', timestamp: new Date().toISOString() };
+  });
+
+  // Database test route
+  app.get('/db-test', async () => {
+    try {
+      const userCount = await prisma.user.count();
+      return {
+        status: 'connected',
+        database: 'parking_db',
+        usersCount: userCount,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   });
 
   return app;
