@@ -1,38 +1,43 @@
 # Roadmap de Desarrollo - Parking Backend
 
-Este documento detalla los pasos planeados para la evolución del backend.
+Este documento detalla las fases de desarrollo del proyecto, integrando el progreso actual y los próximos pasos.
 
-## 🏁 Fase 1: Cimientos y Autenticación (Actual)
-- [x] Configuración inicial del proyecto (Fastify + TS + Prisma).
-- [x] Configuración de Docker para PostgreSQL.
-- [x] Implementación de modelos de usuario en Prisma.
-- [x] Autenticación básica (Registro y Login con JWT).
-- [ ] Documentación inicial (README).
+## ✅ Fase 1: Cimientos e Infraestructura
+- [x] **1A: Setup Base:** Node.js, TypeScript y Fastify configurados.
+- [x] **1B: Infraestructura:** Docker Compose con PostgreSQL, Redis y pgAdmin.
+- [x] **1C: Base de Datos:** Prisma ORM integrado y migraciones iniciales.
+- [x] **1D: Autenticación:** Registro, Login, JWT y validaciones con Zod.
+- [x] **1E: Gestión de Estacionamientos:** Implementación de CRUD de parqueaderos, integración con PostGIS para geolocalización y búsqueda por cercanía.
 
-## 🏗️ Fase 2: Gestión de Parqueaderos
-- [ ] **Modelo de Datos:** Crear modelos para `ParkingLot`, `Spot` (espacio de parqueo).
-- [ ] **Geolocalización:** Integrar PostGIS para búsqueda de parqueaderos cercanos.
-- [ ] **CRUD de Parqueaderos:** Endpoints para crear, listar, actualizar y eliminar parqueaderos.
-- [ ] **Gestión de Espacios:** Definir tipos de espacios (Carro, Moto, Bicicleta) y su disponibilidad.
+## 🏗️ Fase 2: Gestión Detallada de Espacios (En progreso)
+- [ ] **1F: Gestión de Espacios (Parking Spaces):**
+  - [ ] CRUD de espacios individuales (`ParkingSpace`).
+  - [ ] Organización por niveles (`ParkingLevel`).
+  - [ ] Atributos especiales: puestos para personas con discapacidad, carga eléctrica.
+  - [ ] Dashboard de ocupación en tiempo real para administradores.
 
-## 📅 Fase 3: Reservas y Disponibilidad
-- [ ] **Modelo de Reservas:** Crear modelo `Reservation` con estados (PENDING, ACTIVE, COMPLETED, CANCELLED).
-- [ ] **Lógica de Reservas:** 
-  - Validar disponibilidad antes de reservar.
-  - Bloqueo temporal de espacios.
-  - Finalización de estadía y cálculo de costos.
+## 📅 Fase 3: Sistema de Reservas
+- [ ] **1G: Reservas:**
+  - [ ] Definición del modelo de datos para Reservas.
+  - [ ] Lógica de creación y cancelación de reservas.
+  - [ ] Validación automática de disponibilidad por rango de tiempo.
+  - [ ] Sistema de notificaciones para confirmaciones.
 
 ## 💰 Fase 4: Pagos y Facturación
-- [ ] **Integración de Pagos:** Implementar pasarela de pagos (e.g., Stripe, Wompi).
-- [ ] **Historial de Transacciones:** Registro de cobros y estados de pago.
-- [ ] **Generación de Recibos:** PDF o JSON detallado del servicio prestado.
+- [ ] **1H: Pagos (Enfoque Local):**
+  - [ ] Integración con Binance Pay.
+  - [ ] Integración con Cashea.
+  - [ ] Registro y validación de Pago Móvil y Transferencias Bancarias.
+  - [ ] Historial transaccional y estados de pago.
 
-## 🛡️ Fase 5: Roles y Permisos Avanzados
-- [ ] Middlewares de autorización basados en roles (`ADMIN`, `PARKING_MANAGER`).
-- [ ] Panel administrativo para gestión global.
+## 🎁 Fase 5: Fidelización y Gamificación
+- [ ] **1I: Sistema de Puntos:**
+  - [ ] Lógica de acumulación de puntos por uso del servicio.
+  - [ ] Niveles de membresía y beneficios asociados.
+  - [ ] Canje de puntos por descuentos o tiempo de parqueo.
 
-## 🚀 Fase 6: Optimizaciones y Despliegue
-- [ ] Implementación de Cache con Redis para búsquedas frecuentes.
-- [ ] Tests Unitarios y de Integración (Jest/Vitest).
-- [ ] Configuración de CI/CD.
-- [ ] Despliegue en Cloud (AWS/DigitalOcean).
+## 📊 Fase 6: Analytics y Escalabilidad
+- [ ] **1J: Analytics:** Reportes de ingresos, ocupación y usuarios frecuentes.
+- [ ] **Optimización:** Implementación de Cache con Redis para rutas de alta demanda.
+- [ ] **Calidad:** Tests unitarios y de integración.
+- [ ] **Despliegue:** Configuración de CI/CD y despliegue en la nube.

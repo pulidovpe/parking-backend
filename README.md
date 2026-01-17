@@ -8,40 +8,43 @@ Backend para el sistema de gestión de parqueaderos, desarrollado con un stack m
 - **Lenguaje:** [TypeScript](https://www.typescriptlang.org/)
 - **Framework:** [Fastify](https://www.fastify.io/)
 - **ORM:** [Prisma](https://www.prisma.io/)
-- **Base de Datos:** [PostgreSQL](https://www.postgresql.org/) (con extensión PostGIS para geolocalización)
+- **Base de Datos:** [PostgreSQL](https://www.postgresql.org/) con **PostGIS** (Geolocalización)
 - **Validación:** [Zod](https://zod.dev/)
 - **Autenticación:** [JWT](https://jwt.io/) & [Bcryptjs](https://github.com/dcodeIO/bcrypt.js)
-- **Logging:** [Pino](https://getpino.io/)
+- **Logging:** [Pino](https://getpino.io/) con `pino-pretty`
 
 ## 🚀 Estado Actual del Proyecto
 
-Actualmente, el proyecto cuenta con la base estructural y el módulo de autenticación inicial.
+El proyecto ha avanzado significativamente en sus módulos core.
 
 ### Funcionalidades implementadas:
-- ✅ Configuración base de Fastify con TypeScript.
-- ✅ Conexión a base de Datos PostgreSQL mediante Prisma.
-- ✅ Módulo de Autenticación:
-  - `POST /api/auth/register`: Registro de nuevos usuarios.
-  - `POST /api/auth/login`: Inicio de sesión y generación de JWT.
-- ✅ Endpoints de utilidad:
-  - `GET /health`: Estado de salud del servidor.
-  - `GET /db-test`: Verificación de conexión con la base de datos.
+- ✅ **Base Sólida:** Configuración de Fastify, TypeScript y Docker.
+- ✅ **Módulo de Autenticación:** Registro y login seguro con JWT y protección de rutas mediante middlewares.
+- ✅ **Gestión de Parqueaderos:**
+  - Registro y actualización de parqueaderos con coordenadas geográficas.
+  - Búsqueda de parqueaderos cercanos mediante **PostGIS**.
+  - Soporte para múltiples niveles y organización de espacios.
+- ✅ **Utilidades:** Health checks y tests de conexión a base de datos.
 
 ## 📂 Estructura del Proyecto
 
 ```text
 src/
-├── config/      # Configuraciones de base de datos y variables de entorno
-├── controllers/ # Lógica de los endpoints
-├── routes/      # Definición de rutas (Fastify plugins)
-├── services/    # Lógica de negocio
-├── schemas/     # Validaciones con Zod
-├── utils/       # Utilidades (JWT, Passwords, etc.)
-├── app.ts       # Configuración de la aplicación
-└── server.ts    # Punto de entrada del servidor
+├── config/      # Configuraciones de DB, entorno y PostGIS
+├── controllers/ # Lógica de los endpoints (Auth, Parking)
+├── middlewares/ # Protección de rutas y validaciones
+├── routes/      # Definición de rutas (Auth, Parking)
+├── services/    # Lógica de negocio avanzada
+├── schemas/     # Validaciones de esquemas con Zod
+├── utils/       # Utilidades de seguridad y procesamiento
+├── app.ts       # Configuración global de la app
+└── server.ts    # Punto de entrada
 prisma/
-└── schema.prisma # Definición del modelo de datos
+└── schema.prisma # Modelado de datos (User, Parking, Level, Space)
 ```
+
+## 🗺️ Roadmap
+Puedes consultar el plan detallado de desarrollo y las fases futuras en el [Roadmap de Desarrollo](plans/roadmap.md).
 
 ## 🛠️ Configuración para Desarrollo
 
@@ -51,14 +54,14 @@ prisma/
    ```
 
 2. **Configurar variables de entorno:**
-   Copia el archivo `.env.example` a `.env` y ajusta los valores.
+   Copia el archivo `.env.example` a `.env` y ajusta los valores necesarios.
 
-3. **Levantar base de datos (Docker):**
+3. **Levantar infraestructura (Docker):**
    ```bash
    npm run docker:up
    ```
 
-4. **Ejecutar migraciones de Prisma:**
+4. **Sincronizar base de datos:**
    ```bash
    npm run prisma:migrate
    ```
@@ -69,8 +72,4 @@ prisma/
    ```
 
 ---
-## 🗺️ Roadmap
-Puedes consultar el plan detallado de desarrollo en el [Roadmap de Desarrollo](plans/roadmap.md).
-
----
-*Este archivo se actualiza a medida que el proyecto avanza.*
+*Este archivo se actualiza dinámicamente según el progreso del backend.*
