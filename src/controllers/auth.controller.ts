@@ -20,11 +20,19 @@ export class AuthController {
         data: result,
       });
     } catch (error) {
+      // Log del error para debug
+      console.error('Error en register:', error);
+
       if (error instanceof ZodError) {
+        const formattedErrors = error.issues.map((issue) => ({
+          field: issue.path.join('.'),
+          message: issue.message,
+        }));
+
         return reply.code(400).send({
           success: false,
           message: 'Error de validación',
-          errors: error.errors,
+          errors: formattedErrors,
         });
       }
 
@@ -56,11 +64,19 @@ export class AuthController {
         data: result,
       });
     } catch (error) {
+      // Log del error para debug
+      console.error('Error en login:', error);
+
       if (error instanceof ZodError) {
+        const formattedErrors = error.issues.map((issue) => ({
+          field: issue.path.join('.'),
+          message: issue.message,
+        }));
+
         return reply.code(400).send({
           success: false,
           message: 'Error de validación',
-          errors: error.errors,
+          errors: formattedErrors,
         });
       }
 
