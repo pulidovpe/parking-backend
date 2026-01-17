@@ -21,6 +21,19 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum ParkingStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+enum SpaceStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  OUT_OF_SERVICE
+}
+
 model User {
   id        String     @id @default(uuid())
   email     String     @unique
@@ -34,5 +47,92 @@ model User {
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
 
+  // Relaciones
+  parkings Parking[]
+
   @@map("users")
+}
+
+model Parking {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  address     String
+  city        String
+  state       String
+  zipCode     String?       @map("zip_code")
+  latitude    Float
+  longitude   Float
+  // location será manejado con SQL raw queries para PostGIS
+  
+  status      ParkingStatus @default(ACTIVE)
+  hourlyRate  Float         @map("hourly_rate")
+  imageUrl    String?       @map("image_url")
+  
+  // Información adicional
+  hasMultipleLevels Boolean @default(false) @map("has_multiple_levels")
+  totalLevels       Int     @default(1) @map("total_levels")
+  
+  // Horarios
+  openingTime String? @map("opening_time") // formato HH:MM
+  closingTime String? @map("closing_time") // formato HH:MM
+  is24Hours   Boolean @default(false) @map("is_24_hours")
+  
+  // Relaciones
+  managerId String @map("manager_id")
+  manager   User   @relation(fields: [managerId], references: [id])
+  
+  levels    ParkingLevel[]
+  spaces    ParkingSpace[]
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([managerId])
+  @@map("parkings")
+}
+
+model ParkingLevel {
+  id          String @id @default(uuid())
+  parkingId   String @map("parking_id")
+  levelNumber Int    @map("level_number") // -2, -1, 0, 1, 2, etc.
+  levelName   String @map("level_name") // "Sótano 2", "Planta Baja", "Piso 1"
+  
+  totalSpaces Int @default(0) @map("total_spaces")
+  
+  // Relaciones
+  parking Parking        @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+  spaces  ParkingSpace[]
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([parkingId, levelNumber])
+  @@index([parkingId])
+  @@map("parking_levels")
+}
+
+model ParkingSpace {
+  id            String      @id @default(uuid())
+  parkingId     String      @map("parking_id")
+  levelId       String?     @map("level_id")
+  spaceNumber   String      @map("space_number") // "A-101", "B-205"
+  status        SpaceStatus @default(AVAILABLE)
+  
+  // Información adicional
+  isHandicapped Boolean @default(false) @map("is_handicapped")
+  isElectric    Boolean @default(false) @map("is_electric")
+  
+  // Relaciones
+  parking Parking       @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+  level   ParkingLevel? @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([parkingId, spaceNumber])
+  @@index([parkingId])
+  @@index([levelId])
+  @@index([status])
+  @@map("parking_spaces")
 }
