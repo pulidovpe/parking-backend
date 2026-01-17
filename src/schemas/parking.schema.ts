@@ -21,10 +21,10 @@ export const createParkingSchema = z.object({
 export const updateParkingSchema = createParkingSchema.partial();
 
 export const searchParkingSchema = z.object({
-  latitude: z.number().min(-90).max(90),
-  longitude: z.number().min(-180).max(180),
-  radiusKm: z.number().positive().max(50).default(5), // Radio en kilómetros
-  limit: z.number().int().positive().max(100).default(20),
+  latitude: z.coerce.number().min(-90).max(90),
+  longitude: z.coerce.number().min(-180).max(180),
+  radiusKm: z.coerce.number().positive().max(50).default(5), // Radio en kilómetros
+  limit: z.coerce.number().int().positive().max(100).default(20),
 });
 
 export type CreateParkingInput = z.infer<typeof createParkingSchema>;
