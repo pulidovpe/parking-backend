@@ -100,6 +100,17 @@ export class ParkingService {
             lastName: true,
           },
         },
+        levels: {
+          orderBy: { levelNumber: 'asc' },
+          select: {
+            id: true,
+            levelNumber: true,
+            levelName: true,
+            totalSpaces: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
         _count: {
           select: {
             spaces: true,

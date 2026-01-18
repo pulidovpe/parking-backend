@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import prisma from './config/database';
 import { authRoutes } from './routes/auth.routes';
 import { parkingRoutes } from './routes/parking.routes';
+import { spaceRoutes } from './routes/space.routes';
 
 export async function buildApp() {
   const app = Fastify({
@@ -52,6 +53,9 @@ export async function buildApp() {
   
   // Parking routes
   await app.register(parkingRoutes, { prefix: '/api/parkings' });
+
+  // Space routes
+  await app.register(spaceRoutes, { prefix: '/api/spaces' });
   
   return app;
 }

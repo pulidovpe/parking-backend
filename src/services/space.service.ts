@@ -100,6 +100,20 @@ export class SpaceService {
       throw new Error('No puedes crear más de 500 espacios a la vez');
     }
 
+    // Verificar que el nivel existe si se proporciona
+    if (data.levelId) {
+      const level = await prisma.parkingLevel.findFirst({
+        where: { 
+          id: data.levelId,
+          parkingId: data.parkingId,
+        },
+      });
+
+      if (!level) {
+        throw new Error('Nivel no encontrado en este estacionamiento');
+      }
+    }
+
     // Generar espacios
     const spacesToCreate = [];
     for (let i = data.startNumber; i <= data.endNumber; i++) {
@@ -117,7 +131,7 @@ export class SpaceService {
       skipDuplicates: true,
     });
 
-    // Actualizar contador de espacios en el nivel (si aplica)
+    // Actualizar contador de espacios en el nivel SIEMPRE (si hay levelId)
     if (data.levelId) {
       await this.updateLevelSpaceCount(data.levelId);
     }
@@ -139,6 +153,10 @@ export class SpaceService {
       where: { id: levelId },
       data: { totalSpaces: count },
     });
+
+    console.log(`✅ Nivel ${levelId} actualizado: ${count} espacios totales`);
+    
+    return count;
   }
 
   // Obtener espacios con filtros
