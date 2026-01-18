@@ -8,36 +8,36 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
 - [x] **1C: Base de Datos:** Prisma ORM integrado y migraciones iniciales.
 - [x] **1D: Autenticación:** Registro, Login, JWT y validaciones con Zod.
 - [x] **1E: Gestión de Estacionamientos:** Implementación de CRUD de parqueaderos, integración con PostGIS para geolocalización y búsqueda por cercanía.
+- [x] **1F: Gestión de Espacios (Parking Spaces):**
+  - [x] CRUD de espacios individuales (`ParkingSpace`).
+  - [x] Organización por niveles (`ParkingLevel`).
+  - [x] Creación masiva de espacios (Bulk creation).
+  - [x] Dashboard de disponibilidad en tiempo real y filtros avanzados.
 
-## 🏗️ Fase 2: Gestión Detallada de Espacios (En progreso)
-- [ ] **1F: Gestión de Espacios (Parking Spaces):**
-  - [ ] CRUD de espacios individuales (`ParkingSpace`).
-  - [ ] Organización por niveles (`ParkingLevel`).
-  - [ ] Atributos especiales: puestos para personas con discapacidad, carga eléctrica.
-  - [ ] Dashboard de ocupación en tiempo real para administradores.
-
-## 📅 Fase 3: Sistema de Reservas
+## 🏗️ Fase 2: Sistema de Reservas (Próxima Fase)
 - [ ] **1G: Reservas:**
   - [ ] Definición del modelo de datos para Reservas.
   - [ ] Lógica de creación y cancelación de reservas.
-  - [ ] Validación automática de disponibilidad por rango de tiempo.
-  - [ ] Sistema de notificaciones para confirmaciones.
+  - [ ] Validación automática de disponibilidad en tiempo real por rango de tiempo.
+  - [ ] Historial de reservas por usuario.
+  - [ ] Sistema de notificaciones básicas.
 
-## 💰 Fase 4: Pagos y Facturación
+## 💰 Fase 3: Sistema de Pagos
 - [ ] **1H: Pagos (Enfoque Local):**
+  - [ ] Modelo de transacciones y cálculo de costos por tiempo.
   - [ ] Integración con Binance Pay.
   - [ ] Integración con Cashea.
   - [ ] Registro y validación de Pago Móvil y Transferencias Bancarias.
   - [ ] Historial transaccional y estados de pago.
 
-## 🎁 Fase 5: Fidelización y Gamificación
+## 🎁 Fase 4: Fidelización y Gamificación
 - [ ] **1I: Sistema de Puntos:**
-  - [ ] Lógica de acumulación de puntos por uso del servicio.
-  - [ ] Niveles de membresía y beneficios asociados.
-  - [ ] Canje de puntos por descuentos o tiempo de parqueo.
+  - [ ] Lógica de acumulación automática de puntos.
+  - [ ] Niveles de membresía (Bronce, Plata, Oro).
+  - [ ] Canje de puntos por descuentos o beneficios.
 
-## 📊 Fase 6: Analytics y Escalabilidad
-- [ ] **1J: Analytics:** Reportes de ingresos, ocupación y usuarios frecuentes.
-- [ ] **Optimización:** Implementación de Cache con Redis para rutas de alta demanda.
-- [ ] **Calidad:** Tests unitarios y de integración.
-- [ ] **Despliegue:** Configuración de CI/CD y despliegue en la nube.
+## 📊 Fase 5: Analytics y Escalabilidad
+- [ ] **1J: Analytics:** Reportes de ingresos, ocupación, horas pico y usuarios frecuentes.
+- [ ] **1K: Notificaciones Avanzadas:** Recordatorios de tiempo, alertas de vencimiento y notificaciones Push/Email.
+- [ ] **Optimización:** Implementación de Cache con Redis y tests de calidad.
+- [ ] **Despliegue:** Configuración de CI/CD.

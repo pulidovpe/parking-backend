@@ -8,39 +8,42 @@ Backend para el sistema de gestión de parqueaderos, desarrollado con un stack m
 - **Lenguaje:** [TypeScript](https://www.typescriptlang.org/)
 - **Framework:** [Fastify](https://www.fastify.io/)
 - **ORM:** [Prisma](https://www.prisma.io/)
-- **Base de Datos:** [PostgreSQL](https://www.postgresql.org/) con **PostGIS** (Geolocalización)
+- **Base de Datos:** [PostgreSQL](https://www.postgresql.org/) con **PostGIS** (Geolocalización) y **Redis** (Cache)
 - **Validación:** [Zod](https://zod.dev/)
 - **Autenticación:** [JWT](https://jwt.io/) & [Bcryptjs](https://github.com/dcodeIO/bcrypt.js)
 - **Logging:** [Pino](https://getpino.io/) con `pino-pretty`
 
 ## 🚀 Estado Actual del Proyecto
 
-El proyecto ha avanzado significativamente en sus módulos core.
+El proyecto se encuentra en una etapa avanzada del núcleo funcional, con soporte para gestión geográfica y disponibilidad en tiempo real.
 
 ### Funcionalidades implementadas:
 - ✅ **Base Sólida:** Configuración de Fastify, TypeScript y Docker.
-- ✅ **Módulo de Autenticación:** Registro y login seguro con JWT y protección de rutas mediante middlewares.
+- ✅ **Módulo de Autenticación:** Registro y login seguro con JWT y protección de rutas.
 - ✅ **Gestión de Parqueaderos:**
-  - Registro y actualización de parqueaderos con coordenadas geográficas.
+  - Registro y actualización con coordenadas geográficas.
   - Búsqueda de parqueaderos cercanos mediante **PostGIS**.
-  - Soporte para múltiples niveles y organización de espacios.
-- ✅ **Utilidades:** Health checks y tests de conexión a base de datos.
+- ✅ **Gestión de Espacios (Spaces):**
+  - Creación y administración de niveles y puestos individuales.
+  - Monitoreo de disponibilidad en tiempo real.
+  - Filtros por tipo de vehículo (carro, moto, eléctrico, discapacitados).
+- ✅ **Utilidades:** Health checks y soporte para Docker (DB + Redis + pgAdmin).
 
 ## 📂 Estructura del Proyecto
 
 ```text
 src/
 ├── config/      # Configuraciones de DB, entorno y PostGIS
-├── controllers/ # Lógica de los endpoints (Auth, Parking)
+├── controllers/ # Lógica de los endpoints (Auth, Parking, Space)
 ├── middlewares/ # Protección de rutas y validaciones
-├── routes/      # Definición de rutas (Auth, Parking)
-├── services/    # Lógica de negocio avanzada
+├── routes/      # Definición de rutas (Auth, Parking, Space)
+├── services/    # Lógica de negocio (CRUDs y Geofencing)
 ├── schemas/     # Validaciones de esquemas con Zod
 ├── utils/       # Utilidades de seguridad y procesamiento
 ├── app.ts       # Configuración global de la app
 └── server.ts    # Punto de entrada
 prisma/
-└── schema.prisma # Modelado de datos (User, Parking, Level, Space)
+└── schema.prisma # Modelado de datos relacional
 ```
 
 ## 🗺️ Roadmap
