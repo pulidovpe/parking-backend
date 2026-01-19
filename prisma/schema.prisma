@@ -49,6 +49,7 @@ model User {
 
   // Relaciones
   parkings Parking[]
+  reservations Reservation[]
 
   @@map("users")
 }
@@ -84,6 +85,7 @@ model Parking {
   
   levels    ParkingLevel[]
   spaces    ParkingSpace[]
+  reservations Reservation[]
   
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -127,6 +129,8 @@ model ParkingSpace {
   parking Parking       @relation(fields: [parkingId], references: [id], onDelete: Cascade)
   level   ParkingLevel? @relation(fields: [levelId], references: [id], onDelete: SetNull)
   
+  reservations Reservation[]
+  
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -135,4 +139,51 @@ model ParkingSpace {
   @@index([levelId])
   @@index([status])
   @@map("parking_spaces")
+}
+
+enum ReservationStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+model Reservation {
+  id              String            @id @default(uuid())
+  userId          String            @map("user_id")
+  parkingId       String            @map("parking_id")
+  spaceId         String            @map("space_id")
+  
+  status          ReservationStatus @default(PENDING)
+  
+  // Tiempos
+  startTime       DateTime          @map("start_time")
+  endTime         DateTime?         @map("end_time")
+  estimatedEndTime DateTime         @map("estimated_end_time")
+  actualEndTime   DateTime?         @map("actual_end_time")
+  
+  // Costos
+  hourlyRate      Float             @map("hourly_rate")
+  estimatedCost   Float             @map("estimated_cost")
+  actualCost      Float?            @map("actual_cost")
+  
+  // Metadata
+  notes           String?
+  cancellationReason String?        @map("cancellation_reason")
+  
+  // Relaciones
+  user    User         @relation(fields: [userId], references: [id])
+  parking Parking      @relation(fields: [parkingId], references: [id])
+  space   ParkingSpace @relation(fields: [spaceId], references: [id])
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([parkingId])
+  @@index([spaceId])
+  @@index([status])
+  @@index([startTime])
+  @@map("reservations")
 }
