@@ -4,6 +4,7 @@ import prisma from './config/database';
 import { authRoutes } from './routes/auth.routes';
 import { parkingRoutes } from './routes/parking.routes';
 import { spaceRoutes } from './routes/space.routes';
+import { reservationRoutes } from './routes/reservation.routes';
 
 export async function buildApp() {
   const app = Fastify({
@@ -56,6 +57,9 @@ export async function buildApp() {
 
   // Space routes
   await app.register(spaceRoutes, { prefix: '/api/spaces' });
+
+  // Reservation routes
+  await app.register(reservationRoutes, { prefix: '/api/reservations' });
   
   return app;
 }
