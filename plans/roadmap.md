@@ -16,18 +16,18 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
 
 ## 🏗️ Fase 2: Sistema de Reservas (Próxima Fase)
 - [ ] **1G: Reservas:**
-  - [ ] Definición del modelo de datos para Reservas.
-  - [ ] Lógica de creación y cancelación de reservas.
-  - [ ] Validación automática de disponibilidad en tiempo real por rango de tiempo.
+  - [x] Definición del modelo de datos para Reservas.
+  - [x] Lógica de creación y cancelación de reservas.
+  - [x] Validación automática de disponibilidad en tiempo real por rango de tiempo.
   - [ ] Historial de reservas por usuario.
   - [ ] Sistema de notificaciones básicas.
 
 ## 💰 Fase 3: Sistema de Pagos
 - [ ] **1H: Pagos (Enfoque Local):**
-  - [ ] Modelo de transacciones y cálculo de costos por tiempo.
+  - [x] Modelo de transacciones y cálculo de costos por tiempo.
   - [ ] Integración con Binance Pay.
   - [ ] Integración con Cashea.
-  - [ ] Registro y validación de Pago Móvil y Transferencias Bancarias.
+  - [x] Registro y validación de Pago Móvil.
   - [ ] Historial transaccional y estados de pago.
 
 ## 🎁 Fase 4: Fidelización y Gamificación
