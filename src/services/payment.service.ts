@@ -1,4 +1,5 @@
-import prisma from '../lib/prisma';
+import { PaymentMethod, PaymentStatus, Currency, ReservationStatus } from '@prisma/client';
+import prisma from '../config/database';
 import { CreateTransactionDTO, VerifyTransactionDTO } from '../types/payment.types';
 
 export const paymentService = {
@@ -14,8 +15,11 @@ export const paymentService = {
       throw new Error('Reserva no encontrada');
     }
 
+    // LOG DE SEGURIDAD
+    //console.log('Comparando reserva.userId:', reservation.userId, 'con userId del token:', userId);
+
     if (reservation.userId !== userId) {
-      throw new Error('No tienes permiso para pagar esta reserva');
+        throw new Error(`No tienes permiso para pagar esta reserva. Propietario: ${reservation.userId}, Tú: ${userId}`);
     }
 
     // Calcular el monto en USD para reportes internos
@@ -39,6 +43,14 @@ export const paymentService = {
         status: 'PENDING' // Siempre nace pendiente de validación
       }
     });
+
+    //console.log('DEBUG PAYMENTS:');
+    //console.log('ID Usuario desde Token:', userId);
+    //console.log('ID Dueño de Reserva en BD:', reservation?.userId);
+
+    if (!reservation || reservation.userId !== userId) {
+        throw new Error('No tienes permiso para pagar esta reserva');
+    }
 
     return transaction;
   },
@@ -69,7 +81,7 @@ export const paymentService = {
       await prisma.reservation.update({
         where: { id: transaction.reservationId },
         data: {
-          status: 'CONFIRMED' // La reserva ya está pagada y lista para usarse
+          status: ReservationStatus.ACTIVE // La reserva ya está pagada y lista para usarse
         }
       });
     }

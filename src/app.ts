@@ -1,10 +1,13 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import fjwt from '@fastify/jwt'; 
 import prisma from './config/database';
+import { env } from './config/env';
 import { authRoutes } from './routes/auth.routes';
 import { parkingRoutes } from './routes/parking.routes';
 import { spaceRoutes } from './routes/space.routes';
 import { reservationRoutes } from './routes/reservation.routes';
+import { paymentRoutes } from './routes/payment.routes';
 
 export async function buildApp() {
   const app = Fastify({
@@ -18,6 +21,14 @@ export async function buildApp() {
           ignore: 'pid,hostname',
         },
       },
+    },
+  });
+
+  // 1. REGISTRO DE JWT (Usando estructura: env.jwt.secret)
+  await app.register(fjwt, {
+    secret: env.jwt.secret,
+    sign: {
+      expiresIn: env.jwt.expiresIn,
     },
   });
 
@@ -60,6 +71,9 @@ export async function buildApp() {
 
   // Reservation routes
   await app.register(reservationRoutes, { prefix: '/api/reservations' });
+
+  // Payment routes
+  await app.register(paymentRoutes, { prefix: '/api/payments' });
   
   return app;
 }
