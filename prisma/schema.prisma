@@ -34,6 +34,29 @@ enum SpaceStatus {
   OUT_OF_SERVICE
 }
 
+// Enums de pagos
+enum PaymentMethod {
+  PAGO_MOVIL
+  TRANSFERENCIA
+  BINANCE_PAY
+  CASHEA
+  ZELLE
+  EFECTIVO // Opcional, pago en garita
+  OTRO
+}
+
+enum PaymentStatus {
+  PENDING   // Usuario reportó el pago, esperando al Manager
+  VERIFIED  // Manager confirmó que el dinero está en banco
+  REJECTED  // Referencia falsa o no encontrada
+  REFUNDED  // Reembolso
+}
+
+enum Currency {
+  USD
+  VES
+}
+
 model User {
   id        String     @id @default(uuid())
   email     String     @unique
@@ -44,12 +67,16 @@ model User {
   role      UserRole   @default(DRIVER)
   status    UserStatus @default(ACTIVE)
   points    Int        @default(0)
+  // NUEVO: Bandera para permitir post-pago (Usuarios recurrentes/premium)
+  isPremium Boolean  @default(false)
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
+
 
   // Relaciones
   parkings Parking[]
   reservations Reservation[]
+  transactions Transaction[] // Relación inversa
 
   @@map("users")
 }
@@ -65,6 +92,10 @@ model Parking {
   latitude    Float
   longitude   Float
   // location será manejado con SQL raw queries para PostGIS
+
+  // NUEVO: Tasa de cambio actual para este estacionamiento (ej. 36.50)
+  exchangeRate Decimal @default(1.0) @db.Decimal(10, 2)
+  location    Unsupported("geometry(Point, 4326)")?
   
   status      ParkingStatus @default(ACTIVE)
   hourlyRate  Float         @map("hourly_rate")
@@ -177,6 +208,9 @@ model Reservation {
   parking Parking      @relation(fields: [parkingId], references: [id])
   space   ParkingSpace @relation(fields: [spaceId], references: [id])
   
+  // NUEVO: Relación con transacciones (una reserva puede tener varios intentos de pago o pagos parciales)
+  transactions Transaction[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -186,4 +220,40 @@ model Reservation {
   @@index([status])
   @@index([startTime])
   @@map("reservations")
+}
+
+// --- NUEVO MODELO TRANSACTION ---
+model Transaction {
+  id            String        @id @default(uuid())
+  
+  // Detalle Financiero
+  amount        Decimal       @db.Decimal(10, 2) // Monto pagado
+  currency      Currency      @default(VES)      // Moneda en la que pagó (usualmente VES en pago móvil)
+  exchangeRate  Decimal       @default(1.0)      // Tasa usada al momento del pago
+  amountInUsd   Decimal       @db.Decimal(10, 2) // Calculado para reportes (amount / exchangeRate)
+
+  // Datos del Reporte
+  referenceId   String        // El número de referencia del banco (clave para conciliar)
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  notes         String?       // Nota del usuario o del manager (ej. "Pago desde banco Mercantil")
+
+  // Relaciones
+  reservationId String
+  reservation   Reservation   @relation(fields: [reservationId], references: [id])
+  
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+
+  // Auditoría
+  verifiedBy    String?       // ID del manager que verificó (opcional por ahora)
+  verifiedAt    DateTime?
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([reservationId])
+  @@index([userId])
+  @@index([status])
+  @@index([referenceId]) // Importante para buscar rápido por referencia
 }
