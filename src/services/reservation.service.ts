@@ -28,7 +28,13 @@ export class ReservationService {
 
     // Verificar que el espacio esté disponible
     if (space.status !== 'AVAILABLE') {
-      throw new Error(`El espacio está ${space.status}`);
+      const statusMessages: Record<string, string> = {
+        RESERVED: 'El espacio ya está reservado por otro usuario',
+        OCCUPIED: 'El espacio está actualmente ocupado',
+        OUT_OF_SERVICE: 'El espacio está fuera de servicio',
+      };
+      
+      throw new Error(statusMessages[space.status] || `El espacio no está disponible (${space.status})`);
     }
 
     // Verificar que el parking esté activo

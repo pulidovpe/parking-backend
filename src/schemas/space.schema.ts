@@ -36,6 +36,7 @@ export const getSpacesQuerySchema = z.object({
   status: z.enum(['AVAILABLE', 'OCCUPIED', 'RESERVED', 'OUT_OF_SERVICE']).optional(),
   isHandicapped: z.coerce.boolean().optional(),
   isElectric: z.coerce.boolean().optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
 });
 
 export type CreateSpaceInput = z.infer<typeof createSpaceSchema>;

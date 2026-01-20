@@ -171,6 +171,7 @@ export class SpaceService {
 
     const spaces = await prisma.parkingSpace.findMany({
       where,
+      take: query.limit,
       include: {
         parking: {
           select: {
