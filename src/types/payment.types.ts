@@ -8,6 +8,7 @@ export interface CreateTransactionDTO {
   referenceId: string;  // "123456"
   method: PaymentMethod;
   notes?: string;
+  metadata?: Record<string, any>; // Para guardar detalles específicos (ej. email de binance, titular zelle)
 }
 
 export interface VerifyTransactionDTO {

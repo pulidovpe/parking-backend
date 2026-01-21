@@ -40,6 +40,7 @@ export const paymentService = {
         referenceId: data.referenceId,
         method: data.method,
         notes: data.notes,
+        metadata: data.metadata || {},
         status: 'PENDING' // Siempre nace pendiente de validación
       }
     });

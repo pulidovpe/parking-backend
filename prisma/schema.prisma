@@ -238,6 +238,9 @@ model Transaction {
   status        PaymentStatus @default(PENDING)
   notes         String?       // Nota del usuario o del manager (ej. "Pago desde banco Mercantil")
 
+  // Para guardar detalles específicos (ej. email de binance, titular zelle)
+  metadata      Json?
+
   // Relaciones
   reservationId String
   reservation   Reservation   @relation(fields: [reservationId], references: [id])
