@@ -23,12 +23,13 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [ ] Sistema de notificaciones básicas.
 
 ## 💰 Fase 3: Sistema de Pagos
-- [ ] **1H: Pagos (Enfoque Local):**
-  - [x] Modelo de transacciones y cálculo de costos por tiempo.
-  - [ ] Integración con Binance Pay.
-  - [ ] Integración con Cashea.
-  - [x] Registro y validación de Pago Móvil.
-  - [ ] Historial transaccional y estados de pago.
+- [x] **1H: Pagos (Enfoque Local):**
+  - [x] Modelo de Base de Datos (Transaction con soporte multivaluta).
+  - [x] Endpoint de Reporte (Cálculo automático de USD/VES).
+  - [x] Validación de Seguridad (Usuario correcto vs Reserva).
+  - [x] Flujo de Verificación (Manager aprueba -> Reserva se activa).
+  - [x] Historial de Transacciones (Usuario).
+  - [x] Métricas Financieras (Manager).
 
 ## 🎁 Fase 4: Fidelización y Gamificación
 - [ ] **1I: Sistema de Puntos:**
