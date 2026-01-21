@@ -5,6 +5,8 @@ import type {
   CancelReservationInput,
   GetReservationsQuery,
 } from '../schemas/reservation.schema';
+import { loyaltyService } from './loyalty.service';
+import { PointSource } from '@prisma/client';
 
 export class ReservationService {
   // Crear una reserva
@@ -205,15 +207,22 @@ export class ReservationService {
     }
 
     if (reservation.status !== 'ACTIVE') {
-      throw new Error(`No puedes completar una reserva con estado ${reservation.status}`);
+      throw new Error(`No puedes completar una reserva con estado ${reservation.status}. Primero debes activarla.`);
     }
 
     const actualEndTime = new Date();
+    // Calcular duración en milisegundos
     const durationMs = actualEndTime.getTime() - reservation.startTime.getTime();
-    const actualHours = Math.ceil(durationMs / (1000 * 60 * 60)); // Redondear hacia arriba
-    const actualCost = reservation.hourlyRate * actualHours;
+    // Convertir a horas (redondeando hacia arriba)
+    const actualHours = Math.ceil(durationMs / (1000 * 60 * 60)); 
+    
+    // VALIDACIÓN IMPORTANTE PARA PRUEBAS:
+    // Si la prueba es muy rápida (milisegundos), cobramos mínimo 1 hora para generar costo
+    const hoursToCharge = actualHours < 1 ? 1 : actualHours;
 
-    // Actualizar reserva
+    const actualCost = reservation.hourlyRate * hoursToCharge;
+
+    // Actualizar reserva en BD
     const updated = await prisma.reservation.update({
       where: { id },
       data: {
@@ -222,29 +231,31 @@ export class ReservationService {
         actualCost,
       },
       include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        parking: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
-          },
-        },
-        space: {
-          select: {
-            id: true,
-            spaceNumber: true,
-          },
-        },
+        user: true, 
+        parking: true,
       },
     });
+
+    // --- 🎁 LÓGICA DE PUNTOS (CORREGIDA) ---
+    // Eliminamos el 'if (data.status...)' porque aquí SIEMPRE es completed.
+    const costForPoints = updated.actualCost || 0;
+    const pointsEarned = Math.floor(Number(costForPoints)); // 1 USD = 1 Punto
+
+    if (pointsEarned > 0) {
+      console.log(`🎁 Intentando dar ${pointsEarned} puntos al usuario ${updated.userId}`);
+      try {
+        await loyaltyService.addPoints(
+          updated.userId,
+          pointsEarned,
+          PointSource.RESERVATION_COMPLETED,
+          `Reserva completada en ${updated.parking.name}`
+        );
+        console.log(`✅ Puntos otorgados exitosamente.`);
+      } catch (error) {
+        console.error("❌ Error dando puntos:", error);
+      }
+    }
+    // ----------------------------------------
 
     // Liberar el espacio
     await prisma.parkingSpace.update({
