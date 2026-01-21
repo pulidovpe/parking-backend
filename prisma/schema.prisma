@@ -78,6 +78,8 @@ model User {
   reservations Reservation[]
   transactions Transaction[] // Relación inversa
 
+  loyaltyProfile LoyaltyProfile?  // El signo ? significa que es opcional (al inicio)
+
   @@map("users")
 }
 
@@ -259,4 +261,47 @@ model Transaction {
   @@index([userId])
   @@index([status])
   @@index([referenceId]) // Importante para buscar rápido por referencia
+}
+
+// --- SISTEMA DE FIDELIDAD (FASE 1I) ---
+
+enum LoyaltyTier {
+  BRONZE   // Nivel inicial
+  SILVER   // Beneficio: 5% descuento (ejemplo)
+  GOLD     // Beneficio: 10% descuento
+  PLATINUM // Beneficio: Prioridad + 15%
+}
+
+enum PointSource {
+  RESERVATION_COMPLETED // Ganado por usar el parking
+  REGISTRATION_BONUS    // Regalo de bienvenida
+  MANUAL_ADJUSTMENT     // Ajuste por soporte técnico
+  REDEMPTION            // Gasto de puntos (Canje)
+}
+
+model LoyaltyProfile {
+  id             String       @id @default(uuid())
+  pointsBalance  Int          @default(0) // Puntos actuales disponibles para gastar
+  lifetimePoints Int          @default(0) // Total histórico acumulado (define el Nivel)
+  tier           LoyaltyTier  @default(BRONZE)
+  
+  userId         String       @unique // Un usuario, un perfil de lealtad
+  user           User         @relation(fields: [userId], references: [id])
+  
+  logs           LoyaltyLog[]
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model LoyaltyLog {
+  id             String       @id @default(uuid())
+  points         Int          // Cantidad (Positivo=Gana, Negativo=Gasta)
+  source         PointSource
+  description    String?      // Ej: "Reserva #123 finalizada"
+  
+  profileId      String
+  profile        LoyaltyProfile @relation(fields: [profileId], references: [id])
+  
+  createdAt      DateTime     @default(now())
 }

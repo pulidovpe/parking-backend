@@ -8,6 +8,7 @@ import { parkingRoutes } from './routes/parking.routes';
 import { spaceRoutes } from './routes/space.routes';
 import { reservationRoutes } from './routes/reservation.routes';
 import { paymentRoutes } from './routes/payment.routes';
+import { loyaltyRoutes } from './routes/loyalty.routes';
 
 export async function buildApp() {
   const app = Fastify({
@@ -74,6 +75,9 @@ export async function buildApp() {
 
   // Payment routes
   await app.register(paymentRoutes, { prefix: '/api/payments' });
+
+  // Loyalty routes
+  await app.register(loyaltyRoutes, { prefix: '/api/loyalty' });
   
   return app;
 }
