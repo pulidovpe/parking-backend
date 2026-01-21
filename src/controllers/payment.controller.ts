@@ -8,7 +8,7 @@ export const paymentController = {
   async reportPayment(req: FastifyRequest, reply: FastifyReply) {
     try {
     
-      // ESTO ES PARA DEPURAR: Mira qué imprime tu terminal
+      // ESTO ES PARA DEPURAR: Mirar qué imprime el terminal
       //console.log('CONTENIDO DE REQ.USER:', req.user);
       
       // Si req.user tiene 'id', esto funciona. 
@@ -59,6 +59,34 @@ export const paymentController = {
       const managerId = req.user.id;
       const pending = await paymentService.getPendingTransactions(managerId);
       return reply.send(pending);
+    } catch (error: any) {
+      return reply.code(500).send({ error: error.message });
+    }
+  },
+
+  // GET /payments/my-history
+  async getMyHistory(req: FastifyRequest, reply: FastifyReply) {
+    try {
+      const user = req.user as any;
+      const userId = user.id || user.userId || user.sub;
+      
+      const history = await paymentService.getUserHistory(userId);
+      return reply.send(history);
+    } catch (error: any) {
+      return reply.code(500).send({ error: error.message });
+    }
+  },
+
+  // GET /payments/stats (Solo Manager)
+  async getStats(req: FastifyRequest, reply: FastifyReply) {
+    try {
+      const user = req.user as any;
+      const managerId = user.id || user.userId || user.sub;
+
+      // Aquí podrías validar rol: if (user.role !== 'MANAGER') ...
+      
+      const stats = await paymentService.getRevenueStats(managerId);
+      return reply.send(stats);
     } catch (error: any) {
       return reply.code(500).send({ error: error.message });
     }

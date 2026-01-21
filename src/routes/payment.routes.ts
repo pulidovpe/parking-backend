@@ -19,4 +19,10 @@ export async function paymentRoutes(fastify: FastifyInstance) {
   // 3. Manager ve pagos pendientes
   // GET /api/payments/pending
   fastify.get('/pending', paymentController.getPending);
+
+  // 1. Historial del conductor
+  fastify.get('/my-history', paymentController.getMyHistory);
+
+  // 2. Dashboard del Manager
+  fastify.get('/stats', paymentController.getStats);
 }

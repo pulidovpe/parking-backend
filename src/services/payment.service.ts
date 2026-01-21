@@ -113,5 +113,76 @@ export const paymentService = {
       },
       orderBy: { createdAt: 'desc' }
     });
+  },
+
+  // 5. Historial de pagos del usuario (Conductor)
+  async getUserHistory(userId: string) {
+    return await prisma.transaction.findMany({
+      where: { userId },
+      include: {
+        reservation: {
+          select: {
+            id: true,
+            startTime: true,
+            endTime: true,
+            parking: {
+              select: { name: true }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  },
+
+  // 6. Estadísticas de Ingresos (Para Dashboard del Manager)
+  async getRevenueStats(managerId: string) {
+    // A. Calcular Ingreso Total Confirmado (Suma de amountInUsd)
+    // Filtramos transacciones donde la reserva pertenece a un parking de este manager
+    const totalRevenue = await prisma.transaction.aggregate({
+      _sum: {
+        amountInUsd: true
+      },
+      where: {
+        status: 'VERIFIED', // Solo dinero real verificado
+        reservation: {
+          parking: {
+            managerId: managerId // Filtro de seguridad: solo sus estacionamientos
+          }
+        }
+      }
+    });
+
+    // B. Conteo por Estado (Para saber cuántos pagos hay pendientes)
+    const statusCounts = await prisma.transaction.groupBy({
+      by: ['status'],
+      where: {
+        reservation: {
+          parking: { managerId: managerId }
+        }
+      },
+      _count: {
+        id: true
+      }
+    });
+
+    // C. Conteo por Método de Pago (Para saber qué usan más: Binance, Pago Móvil?)
+    const methodCounts = await prisma.transaction.groupBy({
+      by: ['method'],
+      where: {
+        reservation: {
+          parking: { managerId: managerId }
+        }
+      },
+      _count: {
+        id: true
+      }
+    });
+
+    return {
+      totalRevenueUsd: totalRevenue._sum.amountInUsd || 0,
+      transactionsByStatus: statusCounts,
+      transactionsByMethod: methodCounts
+    };
   }
 };

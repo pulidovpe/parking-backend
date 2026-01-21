@@ -5,3 +5,4 @@ dist/
 .DS_Store
 /src/generated/prisma
 PROGRESO_GENERAL_DEL_BACKEND.md
+comandos-curl.txt
