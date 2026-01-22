@@ -52,11 +52,14 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
 
 ## 🔔 FASE 6: Notificaciones Avanzadas
 - [ ] **1K:Sistema de alertas por email/SMS:**
-  - [ ] Confirmación de reserva
-  - [ ] Recordatorio 30 min antes
-  - [ ] Alerta de tiempo próximo a vencer
-  - [ ] Notificación de pago recibido
-  - [ ] Emails transaccionales
+  - [x] Configuración de Nodemailer / Mailtrap (Ethereal).
+  - [x] Emails transaccionales (Bienvenida).
+  - [x] Confirmación de reserva (Implementado en código).
+  - [ ] Notificación de pago recibido (Pendiente de implementación inmediata).
+  - [ ] Recordatorio 30 min antes (Depende de Fase 1L: Cron Jobs).
+  - [ ] Alerta de tiempo próximo a vencer (Depende de Fase 1L: Cron Jobs).
+  - [ ] SMS para eventos críticos (opcional) (Pendiente).
+  - [ ] Plantillas de notificaciones (Pendiente de mejora visual).
 
 ## ⏰ FASE 7: Sistema de Expiración Automática
 - [ ] **1L: Automatización de estados:**
