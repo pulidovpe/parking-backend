@@ -2,6 +2,7 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import { AuthService } from '../services/auth.service';
 import { registerSchema, loginSchema } from '../schemas/auth.schema';
 import { ZodError } from 'zod';
+import { emailService } from '../services/email.service';
 
 const authService = new AuthService();
 
@@ -13,6 +14,17 @@ export class AuthController {
 
       // Registrar usuario
       const result = await authService.register(validatedData);
+
+      // --- 📧 ENVIAR EMAIL DE BIENVENIDA ---
+      // Usamos try/catch para que si falla el email, NO falle el registro del usuario
+      try {
+        if (result.user && result.user.email) {
+          console.log(`📨 Intentando enviar email a ${result.user.email}...`);
+          await emailService.sendWelcomeEmail(result.user.email, result.user.firstName);
+        }
+      } catch (emailError) {
+        console.error("⚠️ Error enviando email de bienvenida:", emailError);
+      }
 
       return reply.code(201).send({
         success: true,

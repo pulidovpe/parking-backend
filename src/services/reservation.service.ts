@@ -7,6 +7,7 @@ import type {
 } from '../schemas/reservation.schema';
 import { loyaltyService } from './loyalty.service';
 import { PointSource } from '@prisma/client';
+import { emailService } from '../services/email.service';
 
 export class ReservationService {
   // Crear una reserva
@@ -126,6 +127,21 @@ export class ReservationService {
       where: { id: data.spaceId },
       data: { status: 'RESERVED' },
     });
+
+    // --- 📧 ENVIAR CONFIRMACIÓN ---
+    try {
+        if (reservation.user.email) {
+            await emailService.sendReservationConfirmation(
+                reservation.user.email,
+                reservation.user.firstName,
+                reservation.parking.name,
+                reservation.startTime,
+                reservation.estimatedCost
+            );
+        }
+    } catch (error) {
+        console.error("⚠️ No se pudo enviar el correo de confirmación:", error);
+    }
 
     return reservation;
   }
