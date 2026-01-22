@@ -9,6 +9,7 @@ import { spaceRoutes } from './routes/space.routes';
 import { reservationRoutes } from './routes/reservation.routes';
 import { paymentRoutes } from './routes/payment.routes';
 import { loyaltyRoutes } from './routes/loyalty.routes';
+import { analyticsRoutes } from './routes/analytics.routes';
 
 export async function buildApp() {
   const app = Fastify({
@@ -78,6 +79,9 @@ export async function buildApp() {
 
   // Loyalty routes
   await app.register(loyaltyRoutes, { prefix: '/api/loyalty' });
+
+  // Registrar (con prefijo)
+  await app.register(analyticsRoutes, { prefix: '/api/analytics' });
   
   return app;
 }
