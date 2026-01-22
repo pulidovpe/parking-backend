@@ -1,6 +1,7 @@
-import { PaymentMethod, PaymentStatus, Currency, ReservationStatus } from '@prisma/client';
+import { PaymentMethod, PaymentStatus, Currency, ReservationStatus, PointSource } from '@prisma/client';
 import prisma from '../config/database';
 import { CreateTransactionDTO, VerifyTransactionDTO } from '../types/payment.types';
+import { loyaltyService } from './loyalty.service';
 
 export const paymentService = {
   // 1. Usuario reporta un pago (Pago Móvil, Transferencia, etc.)
@@ -28,6 +29,32 @@ export const paymentService = {
       ? data.amount / data.exchangeRate 
       : data.amount;
 
+    // Lógica especial para Puntos de Fidelidad
+    let autoVerifiedStatus: PaymentStatus = 'PENDING';
+    
+    if (data.method === 'LOYALTY_POINTS') {
+      const POINTS_EXCHANGE_RATE = 10; // 10 Puntos = 1 USD
+      const pointsNeeded = Math.ceil(amountInUsd * POINTS_EXCHANGE_RATE);
+
+      // 1. Verificar saldo
+      const profile = await loyaltyService.getProfile(userId);
+      if (profile.pointsBalance < pointsNeeded) {
+        throw new Error(`Saldo insuficiente. Necesitas ${pointsNeeded} puntos (Tienes ${profile.pointsBalance})`);
+      }
+
+      // 2. Descontar puntos (Esto genera un log negativo en LoyaltyLog)
+      await loyaltyService.addPoints(
+        userId,
+        -pointsNeeded, // Negativo para restar
+        PointSource.REDEMPTION,
+        `Pago de reserva ${data.reservationId}`
+      );
+
+      // 3. Marcar como VERIFIED automáticamente (ya cobramos)
+      autoVerifiedStatus = 'VERIFIED';
+      console.log(`💎 Pago con puntos exitoso: -${pointsNeeded} pts`);
+    }
+    
     // Crear la transacción
     const transaction = await prisma.transaction.create({
       data: {
@@ -41,10 +68,14 @@ export const paymentService = {
         method: data.method,
         notes: data.notes,
         metadata: data.metadata || {},
-        status: 'PENDING' // Siempre nace pendiente de validación
+        status: autoVerifiedStatus, // <--- Usamos el estado calculado (VERIFIED para puntos)
       }
     });
 
+    // Si se auto-verificó (Puntos), actualizamos la reserva a ACTIVE (o el estado que corresponda post-pago)
+    // Nota: Dependiendo de tu flujo, si paga al salir, la reserva ya estaría COMPLETED. 
+    // Si paga por adelantado, pasa a ACTIVE. 
+    // Por ahora, solo registramos el pago verificado.
     //console.log('DEBUG PAYMENTS:');
     //console.log('ID Usuario desde Token:', userId);
     //console.log('ID Dueño de Reserva en BD:', reservation?.userId);

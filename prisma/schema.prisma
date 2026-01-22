@@ -43,6 +43,7 @@ enum PaymentMethod {
   ZELLE
   EFECTIVO // Opcional, pago en garita
   OTRO
+  LOYALTY_POINTS // Pagar con saldo de fidelidad
 }
 
 enum PaymentStatus {
@@ -55,6 +56,7 @@ enum PaymentStatus {
 enum Currency {
   USD
   VES
+  PTS // Moneda interna de fidelidad
 }
 
 model User {

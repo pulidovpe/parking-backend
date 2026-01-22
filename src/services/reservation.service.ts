@@ -218,17 +218,34 @@ export class ReservationService {
     
     // VALIDACIÓN IMPORTANTE PARA PRUEBAS:
     // Si la prueba es muy rápida (milisegundos), cobramos mínimo 1 hora para generar costo
+    // 1. Calcular costo base
     const hoursToCharge = actualHours < 1 ? 1 : actualHours;
+    let finalCost = reservation.hourlyRate * hoursToCharge;
 
     const actualCost = reservation.hourlyRate * hoursToCharge;
 
+    // 2. --- APLICAR DESCUENTO POR NIVEL (Fase 1I - Beneficios) ---
+    // Obtenemos el perfil del usuario
+    const loyaltyProfile = await prisma.loyaltyProfile.findUnique({ where: { userId } });
+    
+    let discountApplied = 0;
+    if (loyaltyProfile) {
+      const discountPercent = loyaltyService.getDiscountPercentage(loyaltyProfile.tier);
+      if (discountPercent > 0) {
+        discountApplied = finalCost * discountPercent;
+        finalCost = finalCost - discountApplied;
+        console.log(`🤑 Descuento aplicado por nivel ${loyaltyProfile.tier}: -$${discountApplied}`);
+      }
+    }
+    // -----------------------------------------------------------
+    
     // Actualizar reserva en BD
     const updated = await prisma.reservation.update({
       where: { id },
       data: {
         status: 'COMPLETED',
         actualEndTime,
-        actualCost,
+        actualCost: finalCost,
       },
       include: {
         user: true, 

@@ -9,6 +9,13 @@ const TIER_THRESHOLDS = {
   [LoyaltyTier.PLATINUM]: 5000,
 };
 
+const TIER_DISCOUNTS = {
+  [LoyaltyTier.BRONZE]: 0,
+  [LoyaltyTier.SILVER]: 0.05,  // 5%
+  [LoyaltyTier.GOLD]: 0.10,    // 10%
+  [LoyaltyTier.PLATINUM]: 0.15 // 15%
+};
+
 export const loyaltyService = {
   
   // 1. Obtener (o crear) el perfil de un usuario
@@ -62,5 +69,10 @@ export const loyaltyService = {
     ]);
 
     return updatedProfile[0]; // Retornamos el perfil actualizado
+  },
+
+  // 3. Obtener porcentaje de descuento
+  getDiscountPercentage(tier: LoyaltyTier): number {
+    return TIER_DISCOUNTS[tier] || 0;
   }
 };
