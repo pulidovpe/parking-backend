@@ -10,6 +10,9 @@ export async function reservationRoutes(app: FastifyInstance) {
 
   // CRUD de reservas
   app.get('/', reservationController.getReservations.bind(reservationController));
+  // Ruta para el historial del usuario autenticado
+  app.get('/my-history', reservationController.getMyHistory.bind(reservationController));
+  
   app.get('/:id', reservationController.getReservationById.bind(reservationController));
   app.post('/', reservationController.createReservation.bind(reservationController));
   app.put('/:id', reservationController.updateReservation.bind(reservationController));

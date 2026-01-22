@@ -17,4 +17,8 @@ export async function analyticsRoutes(app: FastifyInstance) {
 
   // GET /api/analytics/occupancy
   app.get('/occupancy', analyticsController.getOccupancyHeatmap.bind(analyticsController));
+
+  // RUTAS para top users y export
+  app.get('/top-users', analyticsController.getTopUsers.bind(analyticsController));
+  app.get('/export', analyticsController.exportReport.bind(analyticsController));
 }

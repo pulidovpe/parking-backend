@@ -312,4 +312,19 @@ export class ReservationController {
       });
     }
   }
+
+  // NUEVO: Historial personal del usuario
+  async getMyHistory(req: FastifyRequest, reply: FastifyReply) {
+    try {
+      const user = req.user as any;
+      const userId = user.id || user.userId || user.sub;
+
+      // Reutilizamos el servicio pero forzamos el filtro userId
+      const reservations = await this.reservationService.getReservations({ userId });
+      
+      return reply.send({ success: true, data: reservations });
+    } catch (error: any) {
+      return reply.code(500).send({ success: false, error: error.message });
+    }
+  }
 }

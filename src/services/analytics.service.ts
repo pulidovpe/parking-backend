@@ -120,4 +120,74 @@ export class AnalyticsService {
       count
     }));
   }
+
+  // 4. Top 5 Clientes (VIPs)
+  async getTopUsers(managerId: string) {
+    // 1. Obtener IDs de parkings del manager
+    const parkings = await prisma.parking.findMany({ where: { managerId }, select: { id: true } });
+    const parkingIds = parkings.map(p => p.id);
+
+    // 2. Agrupar transacciones por usuario y sumar montos
+    const topSpenders = await prisma.transaction.groupBy({
+      by: ['userId'],
+      where: {
+        status: 'VERIFIED',
+        reservation: { parkingId: { in: parkingIds } }
+      },
+      _sum: { amountInUsd: true },
+      orderBy: { _sum: { amountInUsd: 'desc' } },
+      take: 5
+    });
+
+    // 3. Enriquecer con nombres (Prisma groupBy no trae relaciones)
+    // Obtenemos los detalles de esos usuarios
+    const userIds = topSpenders.map(t => t.userId);
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, firstName: true, lastName: true, email: true }
+    });
+
+    // 4. Fusionar datos
+    return topSpenders.map(spender => {
+      const user = users.find(u => u.id === spender.userId);
+      return {
+        userId: spender.userId,
+        name: user ? `${user.firstName} ${user.lastName}` : 'Usuario Eliminado',
+        email: user?.email,
+        totalSpent: Number(spender._sum.amountInUsd || 0)
+      };
+    });
+  }
+
+  // 5. Data Cruda para Exportar (CSV)
+  async getExportData(managerId: string) {
+    // Traemos transacciones con relaciones para armar el reporte
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        status: 'VERIFIED',
+        reservation: { parking: { managerId } }
+      },
+      include: {
+        user: { select: { firstName: true, lastName: true, email: true } },
+        reservation: { 
+          include: { 
+            parking: { select: { name: true } } 
+          } 
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Transformamos a formato plano
+    return transactions.map(tx => ({
+      date: tx.createdAt.toISOString().split('T')[0],
+      time: tx.createdAt.toISOString().split('T')[1].substring(0, 5),
+      parking: tx.reservation.parking.name,
+      client: `${tx.user.firstName} ${tx.user.lastName}`,
+      email: tx.user.email,
+      amount: Number(tx.amountInUsd),
+      method: tx.method,
+      reference: tx.referenceId
+    }));
+  }
 }
