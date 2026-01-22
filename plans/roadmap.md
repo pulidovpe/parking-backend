@@ -7,8 +7,8 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
 - [x] **1B: Infraestructura:** Docker Compose con PostgreSQL, Redis y pgAdmin.
 - [x] **1C: Base de Datos:** Prisma ORM integrado y migraciones iniciales.
 - [x] **1D: Autenticación:** Registro, Login, JWT y validaciones con Zod.
-- [x] **1E: Gestión de Estacionamientos:** Implementación de CRUD de parqueaderos, integración con PostGIS para geolocalización y búsqueda por cercanía.
-- [x] **1F: Gestión de Espacios (Parking Spaces):**
+- [x] **1E: Gestión de Estacionamientos:** CRUD, PostGIS y geolocalización.
+- [x] **1F: Gestión de Espacios:** CRUD espacios, niveles y disponibilidad.
   - [x] CRUD de espacios individuales (`ParkingSpace`).
   - [x] Organización por niveles (`ParkingLevel`).
   - [x] Creación masiva de espacios (Bulk creation).
@@ -19,8 +19,8 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [x] Definición del modelo de datos para Reservas.
   - [x] Lógica de creación y cancelación de reservas.
   - [x] Validación automática de disponibilidad en tiempo real por rango de tiempo.
-  - [ ] Historial de reservas por usuario.
-  - [ ] Sistema de notificaciones básicas.
+  - [x] Historial de reservas por usuario. (`GET /my-history`)
+  - [ ] Sistema de notificaciones básicas. (PENDIENTE por implementar en FASE 1K)
 
 ## 💰 Fase 3: Sistema de Pagos
 - [x] **1H: Pagos (Enfoque Local):**
@@ -38,15 +38,17 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [x] Descuentos progresivos por nivel.
   - [x] Canje de puntos por beneficios (Pagar reserva con puntos).
   - [x] Historial de puntos (Endpoint /loyalty/me).
-  - [x] Notificaciones de logros (Console logs implementados).
+  - [x] Notificaciones de logros (Console logs implementados).(PENDIENTE por implementar en FASE 1K)
 
 ## 📊 Fases 5: Analytics y Reportes
 - [ ] **1J: Dashboard para managers con métricas:**
-  - [ ] Estadísticas de ocupación por día/semana/mes
-  - [ ] Ingresos totales y proyecciones
-  - [ ] Usuarios más frecuentes
-  - [ ] Horarios pico y valle
-  - [ ] Reportes exportables (PDF/CSV/Excel)
+  - [x] Estadísticas de ocupación por día/semana/mes (Cubierto por `getOccupancyHeatmap` y KPIs).
+  - [x] Ingresos totales y proyecciones (Ingresos listos en `getRevenueChart`; Proyecciones movidas a fases futuras de IA).
+  - [x] Usuarios más frecuentes (Cubierto por `getTopUsers`).
+  - [x] Horarios pico y valle (Cubierto por `getOccupancyHeatmap`).
+  - [x] Reportes exportables (PDF/CSV/Excel) (Cubierto por endpoint `/export` en CSV).
+  - [x] Gráficas de tendencias (Cubierto por `getRevenueChart`).
+  - [ ] Comparación entre parkings (Pendiente menor, el dashboard actual agrupa todo).
 
 ## 🔔 FASE 6: Notificaciones Avanzadas
 - [ ] **1K:Sistema de alertas por email/SMS:**
