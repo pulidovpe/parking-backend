@@ -19,6 +19,7 @@ enum UserStatus {
   ACTIVE
   INACTIVE
   SUSPENDED
+  PENDING  // Estado inicial
 }
 
 enum ParkingStatus {
@@ -69,8 +70,13 @@ model User {
   role      UserRole   @default(DRIVER)
   status    UserStatus @default(ACTIVE)
   points    Int        @default(0)
-  // NUEVO: Bandera para permitir post-pago (Usuarios recurrentes/premium)
+  
+  // Bandera para permitir post-pago (Usuarios recurrentes/premium)
   isPremium Boolean  @default(false)
+
+  // Token de verificación
+  verificationToken String?  @map("verification_token")
+
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
 

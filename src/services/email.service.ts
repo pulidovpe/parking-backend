@@ -118,5 +118,32 @@ export const emailService = {
 
     console.log("📧 [EMAIL] Alerta de vencimiento enviada: %s", info.messageId);
     console.log("🔗 [PREVIEW] Ver correo: %s", require('nodemailer').getTestMessageUrl(info));
+  },
+
+  // Correo de Verificación
+  async sendVerificationEmail(to: string, name: string, token: string) {
+    const { transporter } = await createTransporter();
+    
+    // En producción, esto sería el dominio real (ej: https://parkingapp.com/verify?token=...)
+    // Para desarrollo local usaremos localhost
+    const verificationLink = `http://localhost:3000/api/auth/verify?token=${token}`;
+
+    const info = await transporter.sendMail({
+      from: '"Parking App 🚗" <security@parkingapp.com>',
+      to,
+      subject: "Verifica tu cuenta 🔐",
+      html: `
+        <div style="font-family: sans-serif; padding: 20px;">
+          <h2>Hola ${name}, bienvenido.</h2>
+          <p>Para activar tu cuenta, por favor verifica tu correo electrónico haciendo clic en el siguiente botón:</p>
+          <a href="${verificationLink}" style="background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Verificar Email</a>
+          <p>O copia este enlace: ${verificationLink}</p>
+          <p>Este enlace es válido por 24 horas.</p>
+        </div>
+      `,
+    });
+
+    console.log("📧 [EMAIL] Verificación enviada: %s", info.messageId);
+    console.log("🔗 [PREVIEW] Ver correo: %s", require('nodemailer').getTestMessageUrl(info));
   }
 };

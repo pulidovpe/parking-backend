@@ -1,7 +1,8 @@
 import prisma from '../config/database';
 import { hashPassword, comparePassword } from '../utils/password.util';
 import type { RegisterInput, LoginInput } from '../schemas/auth.schema';
-import jwt from 'jsonwebtoken'; // <--- Usamos librería estándar
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { env } from '../config/env';
 
 export class AuthService {
@@ -26,19 +27,14 @@ export class AuthService {
   }
 
   async register(data: RegisterInput) {
-    // Verificar si el email ya existe
-    const existingUser = await prisma.user.findUnique({
-      where: { email: data.email },
-    });
+    const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existingUser) throw new Error('El email ya está registrado');
 
-    if (existingUser) {
-      throw new Error('El email ya está registrado');
-    }
-
-    // Hash de la contraseña
     const hashedPassword = await hashPassword(data.password);
+    
+    // Generar token aleatorio de verificación
+    const verificationToken = crypto.randomBytes(32).toString('hex');
 
-    // Crear usuario
     const user = await prisma.user.create({
       data: {
         email: data.email,
@@ -47,51 +43,60 @@ export class AuthService {
         lastName: data.lastName,
         phone: data.phone,
         role: data.role,
+        status: 'PENDING', // <--- Nace INACTIVO
+        verificationToken: verificationToken, // <--- Guardamos el token
       },
-      select: { // Select limpio para devolver
-        id: true, email: true, firstName: true, lastName: true, 
-        phone: true, role: true, status: true, points: true, createdAt: true,
-      },
+      select: { id: true, email: true, firstName: true, verificationToken: true } // Solo devolvemos lo necesario
     });
 
-    // Generar AMBOS tokens
-    const tokens = this.generateTokens(user);
-
-    return { user, ...tokens }; // Devuelve user, accessToken y refreshToken
+    // NO devolvemos tokens JWT aquí. El usuario debe verificar primero.
+    return user; 
   }
 
-  async login(data: LoginInput) {
-    // Buscar usuario
-    const user = await prisma.user.findUnique({
-      where: { email: data.email },
+  // Método para verificar cuenta
+  async verifyEmail(token: string) {
+    // Buscar usuario con ese token
+    const user = await prisma.user.findFirst({
+      where: { verificationToken: token }
     });
 
-    if (!user) {
-      throw new Error('Credenciales inválidas');
-    }
+    if (!user) throw new Error('Token de verificación inválido');
 
-    // Verificar contraseña
+    // Activar usuario y limpiar token
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        status: 'ACTIVE',
+        verificationToken: null
+      }
+    });
+
+    return true;
+  }
+
+  // Login (Bloquear PENDING)
+  async login(data: LoginInput) {
+    const user = await prisma.user.findUnique({ where: { email: data.email } });
+    if (!user) throw new Error('Credenciales inválidas');
+
     const isValidPassword = await comparePassword(data.password, user.password);
+    if (!isValidPassword) throw new Error('Credenciales inválidas');
 
-    if (!isValidPassword) {
-      throw new Error('Credenciales inválidas');
+    // VALIDACIÓN IMPORTANTE
+    if (user.status === 'PENDING') {
+      throw new Error('Debes verificar tu correo electrónico antes de iniciar sesión.');
     }
-
-    // Verificar que el usuario esté activo
+    
     if (user.status !== 'ACTIVE') {
       throw new Error('Usuario inactivo o suspendido');
     }
 
-    // Generar AMBOS tokens
     const tokens = this.generateTokens(user);
-
-    // Retornar usuario sin password + tokens
     const { password: _, ...userWithoutPassword } = user;
-
     return { user: userWithoutPassword, ...tokens };
   }
 
-  // NUEVO MÉTODO: Refrescar Token
+  // Refrescar Token
   async refreshToken(token: string) {
     try {
       // 1. Verificar firma del Refresh Token usando el SECRETO DE REFRESCO

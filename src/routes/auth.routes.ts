@@ -11,6 +11,9 @@ export async function authRoutes(app: FastifyInstance) {
   // RUTA DE REFRESCO
   app.post('/refresh', authController.refresh.bind(authController));
 
+  // RUTA GET (El link del correo apunta aquí)
+  app.get('/verify', authController.verifyEmail.bind(authController));
+
   // Ruta protegida de ejemplo
   app.get(
     '/profile',

@@ -8,26 +8,31 @@ const authService = new AuthService();
 
 export class AuthController {
   
+  // Register (Ahora envía email de verificación)
   async register(request: FastifyRequest, reply: FastifyReply) {
     try {
       const validatedData = registerSchema.parse(request.body);
-      const result = await authService.register(validatedData);
+      
+      // Creamos el usuario (estado PENDING)
+      const user = await authService.register(validatedData);
 
-      // Email de bienvenida
+      // Enviamos el correo con el token generado
       try {
-        if (result.user && result.user.email) {
-          console.log(`📨 Intentando enviar email a ${result.user.email}...`);
-          await emailService.sendWelcomeEmail(result.user.email, result.user.firstName);
+        // user.verificationToken viene del servicio ahora
+        if (user.email && user.verificationToken) { 
+          console.log(`📨 Enviando verificación a ${user.email}...`);
+          await emailService.sendVerificationEmail(user.email, user.firstName, user.verificationToken);
         }
       } catch (emailError) {
-        console.error("⚠️ Error enviando email de bienvenida:", emailError);
+        console.error("⚠️ Error enviando email de verificación:", emailError);
       }
 
       return reply.code(201).send({
         success: true,
-        message: 'Usuario registrado exitosamente',
-        data: result,
+        message: 'Usuario registrado. Por favor verifica tu email para activar la cuenta.',
+        // No devolvemos tokens ni data sensible
       });
+
     } catch (error) {
       return this.handleError(error, reply);
     }
@@ -49,6 +54,27 @@ export class AuthController {
          return reply.code(401).send({ success: false, message: error.message });
       }
       return this.handleError(error, reply);
+    }
+  }
+
+  // Endpoint Verify
+  async verifyEmail(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { token } = request.query as { token: string };
+
+      if (!token) {
+        return reply.code(400).send({ success: false, message: 'Token requerido' });
+      }
+
+      await authService.verifyEmail(token);
+
+      return reply.send({
+        success: true,
+        message: '¡Cuenta verificada exitosamente! Ya puedes iniciar sesión.'
+      });
+      
+    } catch (error: any) {
+      return reply.code(400).send({ success: false, message: error.message });
     }
   }
 
