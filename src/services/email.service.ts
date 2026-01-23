@@ -145,5 +145,36 @@ export const emailService = {
 
     console.log("📧 [EMAIL] Verificación enviada: %s", info.messageId);
     console.log("🔗 [PREVIEW] Ver correo: %s", require('nodemailer').getTestMessageUrl(info));
+  },
+
+  // Email de Recuperación de Contraseña
+  async sendPasswordResetEmail(to: string, name: string, token: string) {
+    const { transporter } = await createTransporter();
+    
+    // En la app, esto apuntaría a una pantalla del Frontend (ej: parkingapp.com/reset-password?token=...)
+    // Por ahora usamos una URL simulada
+    const resetLink = `http://localhost:3000/api/auth/reset-password-form?token=${token}`;
+
+    const info = await transporter.sendMail({
+      from: '"Parking App 🔒" <security@parkingapp.com>',
+      to,
+      subject: "Recupera tu contraseña 🔑",
+      html: `
+        <div style="font-family: sans-serif; padding: 20px;">
+          <h2>Hola ${name},</h2>
+          <p>Recibimos una solicitud para restablecer tu contraseña.</p>
+          <p>Usa el siguiente token o haz clic en el enlace:</p>
+          <div style="background: #f4f4f4; padding: 15px; text-align: center; font-size: 20px; letter-spacing: 2px;">
+            <strong>${token}</strong>
+          </div>
+          <p><a href="${resetLink}">Restablecer contraseña</a></p>
+          <p>Este enlace expira en 1 hora.</p>
+          <p>Si no fuiste tú, ignora este correo.</p>
+        </div>
+      `,
+    });
+
+    console.log("📧 [EMAIL] Reset Password enviado: %s", info.messageId);
+    console.log("🔗 [PREVIEW] Ver correo: %s", require('nodemailer').getTestMessageUrl(info));
   }
 };

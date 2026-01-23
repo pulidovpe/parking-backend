@@ -28,4 +28,8 @@ export async function authRoutes(app: FastifyInstance) {
       });
     }
   );
+
+  // RUTAS DE RECUPERACIÓN
+  app.post('/forgot-password', authController.forgotPassword.bind(authController));
+  app.post('/reset-password', authController.resetPassword.bind(authController));
 }

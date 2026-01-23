@@ -115,4 +115,55 @@ export class AuthService {
       throw new Error('Refresh token inválido o expirado');
     }
   }
+
+  // Solicitar recuperación
+  async requestPasswordReset(email: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    
+    // Por seguridad, si el usuario no existe, NO lanzamos error para no revelar correos registrados.
+    // Solo retornamos false silenciosamente o enviamos un email genérico.
+    if (!user) return null; 
+
+    // Ahora: 4 bytes = 8 caracteres hexadecimales
+    const resetToken = crypto.randomBytes(4).toString('hex').toUpperCase();
+    
+    // Ahora: 20 minutos (1200000 ms) para compensar la menor longitud
+    const resetTokenExpiry = new Date(Date.now() + 20 * 60000);
+
+    // Guardar en BD
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { resetToken, resetTokenExpiry }
+    });
+
+    return { user, resetToken };
+  }
+
+  // Ejecutar el cambio de contraseña
+  async resetPassword(token: string, newPassword: string) {
+    // Buscar usuario con ese token y que NO haya expirado
+    const user = await prisma.user.findFirst({
+      where: {
+        resetToken: token,
+        resetTokenExpiry: { gt: new Date() } // Expiry > Ahora
+      }
+    });
+
+    if (!user) throw new Error('Token inválido o expirado');
+
+    // Hashear nueva contraseña
+    const hashedPassword = await hashPassword(newPassword);
+
+    // Actualizar usuario y limpiar el token usado
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null
+      }
+    });
+
+    return true;
+  }
 }

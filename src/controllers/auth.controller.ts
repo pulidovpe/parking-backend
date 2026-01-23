@@ -99,6 +99,60 @@ export class AuthController {
     }
   }
 
+  // Solicitar Reset
+  async forgotPassword(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { email } = request.body as { email: string };
+      if (!email) return reply.code(400).send({ success: false, message: 'Email requerido' });
+
+      const result = await authService.requestPasswordReset(email);
+
+      // Si el usuario existe, enviamos el correo
+      if (result) {
+        try {
+          console.log(`📨 Enviando token de recuperación a ${result.user.email}...`);
+          await emailService.sendPasswordResetEmail(result.user.email, result.user.firstName, result.resetToken);
+        } catch (error) {
+          console.error('Error enviando email reset:', error);
+        }
+      }
+
+      // Siempre respondemos OK por seguridad (para no confirmar si el email existe o no)
+      return reply.send({
+        success: true,
+        message: 'Si el correo existe, recibirás instrucciones para recuperar tu contraseña.'
+      });
+
+    } catch (error: any) {
+      return reply.code(500).send({ success: false, message: error.message });
+    }
+  }
+
+  // Cambiar Contraseña
+  async resetPassword(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { token, newPassword } = request.body as { token: string; newPassword: string };
+
+      if (!token || !newPassword) {
+        return reply.code(400).send({ success: false, message: 'Token y nueva contraseña requeridos' });
+      }
+
+      if (newPassword.length < 6) {
+        return reply.code(400).send({ success: false, message: 'La contraseña debe tener al menos 6 caracteres' });
+      }
+
+      await authService.resetPassword(token, newPassword);
+
+      return reply.send({
+        success: true,
+        message: 'Contraseña actualizada exitosamente. Ahora puedes iniciar sesión.'
+      });
+
+    } catch (error: any) {
+      return reply.code(400).send({ success: false, message: error.message });
+    }
+  }
+
   // Helper privado para no repetir lógica de errores
   private handleError(error: unknown, reply: FastifyReply) {
     console.error('Auth Error:', error);
