@@ -67,13 +67,15 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [x] Expirar reservas PENDING no activadas (Limpieza automática).
   - [x] Liberar espacios automáticamente.
 
-## 🔒 FASE 8: Seguridad Avanzada
+## 🔒 FASE 8: Seguridad Avanzada (EN PROGRESO)
 - [ ] **1M: Mejoras de seguridad:**
-  - [ ] Rate limiting por IP.
-  - [ ] Refresh tokens para JWT.
-  - [ ] Verificación de email.
-  - [ ] 2FA (opcional).
+  - [x] Rate limiting por IP (Implementando ahora).
+  - [x] Refresh tokens para JWT (Siguiente).
+  - [x] Verificación de email.
+  - [x] Recuperación de contraseña (Optimizada a 8 chars).
+  - [x] 2FA (opcional).
   - [ ] Logs de auditoría.
+  - [ ] Encriptación de datos sensibles.
 
 - [ ] **Optimización:** Implementación de Cache con Redis y tests de calidad.
 - [ ] **Despliegue:** Configuración de CI/CD.
