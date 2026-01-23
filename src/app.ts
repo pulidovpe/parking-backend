@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import fjwt from '@fastify/jwt'; 
+import rateLimit from '@fastify/rate-limit';
 import prisma from './config/database';
 import { env } from './config/env';
 import { authRoutes } from './routes/auth.routes';
@@ -38,6 +39,19 @@ export async function buildApp() {
   // CORS
   await app.register(cors, {
     origin: true,
+  });
+
+  // Registrar Rate Limit (GLOBAL)
+  await app.register(rateLimit, {
+    max: 100, // Máximo 100 peticiones
+    timeWindow: '1 minute', // Por cada 1 minuto
+    errorResponseBuilder: (request, context) => {
+      return {
+        statusCode: 429,
+        error: 'Too Many Requests',
+        message: `Has excedido el límite de peticiones. Intenta de nuevo en ${context.after}.`
+      };
+    }
   });
 
   // Health check route

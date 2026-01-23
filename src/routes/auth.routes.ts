@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { AuthController } from '../controllers/auth.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 
@@ -7,6 +7,9 @@ const authController = new AuthController();
 export async function authRoutes(app: FastifyInstance) {
   app.post('/register', authController.register.bind(authController));
   app.post('/login', authController.login.bind(authController));
+  
+  // RUTA DE REFRESCO
+  app.post('/refresh', authController.refresh.bind(authController));
 
   // Ruta protegida de ejemplo
   app.get(

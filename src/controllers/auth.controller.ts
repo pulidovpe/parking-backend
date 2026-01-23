@@ -7,16 +7,13 @@ import { emailService } from '../services/email.service';
 const authService = new AuthService();
 
 export class AuthController {
+  
   async register(request: FastifyRequest, reply: FastifyReply) {
     try {
-      // Validar datos
       const validatedData = registerSchema.parse(request.body);
-
-      // Registrar usuario
       const result = await authService.register(validatedData);
 
-      // --- 📧 ENVIAR EMAIL DE BIENVENIDA ---
-      // Usamos try/catch para que si falla el email, NO falle el registro del usuario
+      // Email de bienvenida
       try {
         if (result.user && result.user.email) {
           console.log(`📨 Intentando enviar email a ${result.user.email}...`);
@@ -32,42 +29,13 @@ export class AuthController {
         data: result,
       });
     } catch (error) {
-      // Log del error para debug
-      console.error('Error en register:', error);
-
-      if (error instanceof ZodError) {
-        const formattedErrors = error.issues.map((issue) => ({
-          field: issue.path.join('.'),
-          message: issue.message,
-        }));
-
-        return reply.code(400).send({
-          success: false,
-          message: 'Error de validación',
-          errors: formattedErrors,
-        });
-      }
-
-      if (error instanceof Error) {
-        return reply.code(400).send({
-          success: false,
-          message: error.message,
-        });
-      }
-
-      return reply.code(500).send({
-        success: false,
-        message: 'Error interno del servidor',
-      });
+      return this.handleError(error, reply);
     }
   }
 
   async login(request: FastifyRequest, reply: FastifyReply) {
     try {
-      // Validar datos
       const validatedData = loginSchema.parse(request.body);
-
-      // Login
       const result = await authService.login(validatedData);
 
       return reply.code(200).send({
@@ -76,33 +44,51 @@ export class AuthController {
         data: result,
       });
     } catch (error) {
-      // Log del error para debug
-      console.error('Error en login:', error);
-
-      if (error instanceof ZodError) {
-        const formattedErrors = error.issues.map((issue) => ({
-          field: issue.path.join('.'),
-          message: issue.message,
-        }));
-
-        return reply.code(400).send({
-          success: false,
-          message: 'Error de validación',
-          errors: formattedErrors,
-        });
+      // Manejo específico para login (401) si es error genérico
+      if (error instanceof Error && error.message === 'Credenciales inválidas') {
+         return reply.code(401).send({ success: false, message: error.message });
       }
-
-      if (error instanceof Error) {
-        return reply.code(401).send({
-          success: false,
-          message: error.message,
-        });
-      }
-
-      return reply.code(500).send({
-        success: false,
-        message: 'Error interno del servidor',
-      });
+      return this.handleError(error, reply);
     }
+  }
+
+  async refresh(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { refreshToken } = request.body as { refreshToken: string };
+      
+      if (!refreshToken) {
+        return reply.code(400).send({ success: false, message: 'Refresh token requerido' });
+      }
+
+      const tokens = await authService.refreshToken(refreshToken);
+
+      return reply.send({
+        success: true,
+        message: 'Token refrescado exitosamente',
+        data: tokens
+      });
+
+    } catch (error: any) {
+      return reply.code(401).send({ success: false, message: error.message });
+    }
+  }
+
+  // Helper privado para no repetir lógica de errores
+  private handleError(error: unknown, reply: FastifyReply) {
+    console.error('Auth Error:', error);
+
+    if (error instanceof ZodError) {
+      const formattedErrors = error.issues.map((issue) => ({
+        field: issue.path.join('.'),
+        message: issue.message,
+      }));
+      return reply.code(400).send({ success: false, message: 'Error de validación', errors: formattedErrors });
+    }
+
+    if (error instanceof Error) {
+      return reply.code(400).send({ success: false, message: error.message });
+    }
+
+    return reply.code(500).send({ success: false, message: 'Error interno del servidor' });
   }
 }
