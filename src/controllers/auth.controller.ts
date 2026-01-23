@@ -153,6 +153,31 @@ export class AuthController {
     }
   }
 
+  // Setup 2FA
+  async setupTwoFactor(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userId = request.user.userId; // Viene del JWT
+      const result = await authService.setupTwoFactor(userId);
+      return reply.send({ success: true, data: result });
+    } catch (error: any) {
+      return reply.code(400).send({ success: false, message: error.message });
+    }
+  }
+
+  // Enable 2FA
+  async enableTwoFactor(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { token } = request.body as { token: string };
+      const userId = request.user.userId;
+      
+      await authService.enableTwoFactor(userId, token);
+      
+      return reply.send({ success: true, message: '2FA activado exitosamente' });
+    } catch (error: any) {
+      return reply.code(400).send({ success: false, message: error.message });
+    }
+  }
+
   // Helper privado para no repetir lógica de errores
   private handleError(error: unknown, reply: FastifyReply) {
     console.error('Auth Error:', error);

@@ -3,6 +3,8 @@ import { hashPassword, comparePassword } from '../utils/password.util';
 import type { RegisterInput, LoginInput } from '../schemas/auth.schema';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import speakeasy from 'speakeasy';
+import QRCode from 'qrcode';
 import { env } from '../config/env';
 
 export class AuthService {
@@ -74,26 +76,115 @@ export class AuthService {
     return true;
   }
 
-  // Login (Bloquear PENDING)
-  async login(data: LoginInput) {
+  // A. Configurar 2FA (Generar secreto y QR)
+  async setupTwoFactor(userId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error('Usuario no encontrado');
+
+    // 1. Generar secreto (Speakeasy lo hace todo junto)
+    const secret = speakeasy.generateSecret({
+      name: `Parking App (${user.email})` // El nombre que sale en la App del usuario
+    });
+    
+    // 2. Generar Imagen QR
+    // secret.otpauth_url ya viene listo, solo lo convertimos a imagen
+    const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url!);
+
+    // 3. Guardar secreto en BD
+    // IMPORTANTE: Guardamos 'base32' que es el formato estándar
+    await prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorSecret: secret.base32 } 
+    });
+
+    return { secret: secret.base32, qrCodeUrl };
+  }
+
+  // B. Confirmar y Activar 2FA
+  async enableTwoFactor(userId: string, token: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.twoFactorSecret) throw new Error('Configuración de 2FA no iniciada');
+
+    // Verificar token usando speakeasy
+    const isValid = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token: token,
+      window: 1 // Permite un margen de error de +/- 30 segundos por si el reloj está desfasado
+    });
+
+    if (!isValid) throw new Error('Código 2FA inválido');
+
+    // Activar oficialmente
+    await prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorEnabled: true }
+    });
+
+    return true;
+  }
+
+  // Login con Bloqueo y soporte de 2FA
+  async login(data: LoginInput & { twoFactorCode?: string }) { // Agregamos code opcional
     const user = await prisma.user.findUnique({ where: { email: data.email } });
+    
     if (!user) throw new Error('Credenciales inválidas');
 
-    const isValidPassword = await comparePassword(data.password, user.password);
-    if (!isValidPassword) throw new Error('Credenciales inválidas');
+    // 1. CHEQUEO DE BLOQUEO
+    if (user.failedAttempts >= 3) {
+      throw new Error('Cuenta bloqueada por múltiples intentos fallidos. Por favor restablece tu contraseña para desbloquearla.');
+    }
 
-    // VALIDACIÓN IMPORTANTE
-    if (user.status === 'PENDING') {
-      throw new Error('Debes verificar tu correo electrónico antes de iniciar sesión.');
+    // 2. VERIFICAR CONTRASEÑA
+    const isValidPassword = await comparePassword(data.password, user.password);
+
+    if (!isValidPassword) {
+      // INCREMENTAR CONTADOR DE FALLOS
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { failedAttempts: { increment: 1 } }
+      });
+      
+      const intentosRestantes = 2 - user.failedAttempts;
+      if (intentosRestantes < 0) {
+          throw new Error('Cuenta bloqueada. Restablece tu contraseña.');
+      }
+      throw new Error(`Credenciales inválidas. Te quedan ${intentosRestantes + 1} intentos.`);
+    }
+
+    // 3. SI LA CONTRASEÑA ES CORRECTA, RESETEAR CONTADOR
+    if (user.failedAttempts > 0) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { failedAttempts: 0 }
+      });
+    }
+
+    // ... validaciones de estado (PENDING/ACTIVE) ...
+    if (user.status === 'PENDING') throw new Error('Debes verificar tu correo.');
+    if (user.status !== 'ACTIVE') throw new Error('Usuario inactivo.');
+
+    // --- LÓGICA 2FA ---
+    if (user.twoFactorEnabled) {
+      if (!data.twoFactorCode) {
+        throw new Error('Código 2FA requerido'); 
+      }
+
+      // Validar código con speakeasy
+      const isValid = speakeasy.totp.verify({ 
+        secret: user.twoFactorSecret!,
+        encoding: 'base32',
+        token: data.twoFactorCode,
+        window: 1
+      });
+
+      if (!isValid) throw new Error('Código 2FA incorrecto');
     }
     
-    if (user.status !== 'ACTIVE') {
-      throw new Error('Usuario inactivo o suspendido');
-    }
-
+    // Generar tokens
     const tokens = this.generateTokens(user);
-    const { password: _, ...userWithoutPassword } = user;
-    return { user: userWithoutPassword, ...tokens };
+    const { password: _, twoFactorSecret: __, ...userClean } = user; // Quitamos secretos
+    return { user: userClean, ...tokens };
   }
 
   // Refrescar Token
@@ -139,28 +230,26 @@ export class AuthService {
     return { user, resetToken };
   }
 
-  // Ejecutar el cambio de contraseña
+  // Desbloquear al resetear contraseña
   async resetPassword(token: string, newPassword: string) {
-    // Buscar usuario con ese token y que NO haya expirado
     const user = await prisma.user.findFirst({
       where: {
         resetToken: token,
-        resetTokenExpiry: { gt: new Date() } // Expiry > Ahora
+        resetTokenExpiry: { gt: new Date() }
       }
     });
 
     if (!user) throw new Error('Token inválido o expirado');
 
-    // Hashear nueva contraseña
     const hashedPassword = await hashPassword(newPassword);
 
-    // Actualizar usuario y limpiar el token usado
     await prisma.user.update({
       where: { id: user.id },
       data: {
         password: hashedPassword,
         resetToken: null,
-        resetTokenExpiry: null
+        resetTokenExpiry: null,
+        failedAttempts: 0 // <--- AQUÍ DESBLOQUEAMOS AL USUARIO
       }
     });
 

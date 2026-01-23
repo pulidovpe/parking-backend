@@ -15,8 +15,9 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(1, 'La contraseña es requerida'),
+  email: z.string().email({ message: 'Email inválido' }),
+  password: z.string().min(6, { message: 'Mínimo 6 caracteres' }),
+  twoFactorCode: z.string().optional(), // <--- AGREGAR ESTO
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

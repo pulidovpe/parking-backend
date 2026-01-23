@@ -32,4 +32,8 @@ export async function authRoutes(app: FastifyInstance) {
   // RUTAS DE RECUPERACIÓN
   app.post('/forgot-password', authController.forgotPassword.bind(authController));
   app.post('/reset-password', authController.resetPassword.bind(authController));
+
+  // Rutas protegidas para configurar 2FA
+  app.post('/2fa/setup', { preHandler: authMiddleware }, authController.setupTwoFactor.bind(authController));
+  app.post('/2fa/enable', { preHandler: authMiddleware }, authController.enableTwoFactor.bind(authController));
 }
