@@ -206,7 +206,11 @@ model Reservation {
   // Metadata
   notes           String?
   cancellationReason String?        @map("cancellation_reason")
-  
+
+  // Flag para evitar doble email
+  reminderSent          Boolean     @default(false) @map("reminder_sent")
+  expirationWarningSent Boolean     @default(false) @map("expiration_warning_sent")
+
   // Relaciones
   user    User         @relation(fields: [userId], references: [id])
   parking Parking      @relation(fields: [parkingId], references: [id])

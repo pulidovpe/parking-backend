@@ -2,6 +2,7 @@ import { PaymentMethod, PaymentStatus, Currency, ReservationStatus, PointSource 
 import prisma from '../config/database';
 import { CreateTransactionDTO, VerifyTransactionDTO } from '../types/payment.types';
 import { loyaltyService } from './loyalty.service';
+import { emailService } from './email.service';
 
 export const paymentService = {
   // 1. Usuario reporta un pago (Pago Móvil, Transferencia, etc.)
@@ -71,6 +72,23 @@ export const paymentService = {
         status: autoVerifiedStatus, // <--- Usamos el estado calculado (VERIFIED para puntos)
       }
     });
+
+    // --- 📧 NOTIFICACIÓN DE PAGO (Solo si está verificado) ---
+    if (transaction.status === 'VERIFIED') {
+      try {
+        if (transaction.user.email) {
+          await emailService.sendPaymentReceipt(
+            transaction.user.email,
+            transaction.user.firstName,
+            Number(transaction.amount),
+            transaction.currency,
+            transaction.referenceId
+          );
+        }
+      } catch (error) {
+        console.error("⚠️ Error enviando recibo de pago:", error);
+      }
+    }
 
     // Si se auto-verificó (Puntos), actualizamos la reserva a ACTIVE (o el estado que corresponda post-pago)
     // Nota: Dependiendo de tu flujo, si paga al salir, la reserva ya estaría COMPLETED. 

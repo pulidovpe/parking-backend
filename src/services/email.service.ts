@@ -46,5 +46,77 @@ export const emailService = {
     
     console.log("📧 [EMAIL] Reserva enviada: %s", info.messageId);
     console.log("🔗 [PREVIEW] Ver correo: %s", require('nodemailer').getTestMessageUrl(info));
+  },
+
+  // Recibo de Pago
+  async sendPaymentReceipt(to: string, userName: string, amount: number, currency: string, reference: string) {
+    const { transporter } = await createTransporter();
+
+    const info = await transporter.sendMail({
+      from: '"Parking App 🚗" <pagos@parkingapp.com>',
+      to,
+      subject: "Pago Recibido Exitosamente 💸",
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee;">
+          <h2 style="color: #27ae60;">¡Pago Procesado!</h2>
+          <p>Hola ${userName}, hemos recibido tu pago correctamente.</p>
+          <hr>
+          <p><strong>Detalles de la transacción:</strong></p>
+          <ul>
+            <li>💰 Monto: ${amount} ${currency}</li>
+            <li>🔖 Referencia: ${reference}</li>
+            <li>✅ Estado: VERIFIED</li>
+          </ul>
+          <p>Gracias por usar Parking App.</p>
+        </div>
+      `,
+    });
+
+    console.log("📧 [EMAIL] Pago enviado: %s", info.messageId);
+    console.log("🔗 [PREVIEW] Ver correo: %s", require('nodemailer').getTestMessageUrl(info));
+  },
+
+  // Recordatorio de Reserva (30 min antes)
+  async sendReminderEmail(to: string, userName: string, parkingName: string, startTime: Date) {
+    const { transporter } = await createTransporter();
+
+    const info = await transporter.sendMail({
+      from: '"Parking App 🚗" <alertas@parkingapp.com>',
+      to,
+      subject: "⏳ Tu reserva comienza en 30 minutos",
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; border-left: 4px solid #f39c12;">
+          <h2 style="color: #e67e22;">Recordatorio de Reserva</h2>
+          <p>Hola ${userName}, te recordamos que tu reserva en <strong>${parkingName}</strong> está próxima.</p>
+          <p><strong>Hora de inicio:</strong> ${startTime.toLocaleTimeString()}</p>
+          <p>Por favor, llega a tiempo para asegurar tu espacio.</p>
+        </div>
+      `,
+    });
+
+    console.log("📧 [EMAIL] Recordatorio enviado: %s", info.messageId);
+    console.log("🔗 [PREVIEW] Ver correo: %s", require('nodemailer').getTestMessageUrl(info));
+  },
+
+  // Alerta de Tiempo por Vencer (15 min antes de salir)
+  async sendExpirationWarning(to: string, userName: string, parkingName: string, endTime: Date) {
+    const { transporter } = await createTransporter();
+
+    const info = await transporter.sendMail({
+      from: '"Parking App 🚗" <alertas@parkingapp.com>',
+      to,
+      subject: "⚠️ Tu tiempo está por terminar",
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; border-left: 4px solid #e74c3c;">
+          <h2 style="color: #c0392b;">Tu reserva finaliza pronto</h2>
+          <p>Hola ${userName}, tu tiempo en <strong>${parkingName}</strong> termina en 15 minutos.</p>
+          <p><strong>Hora límite:</strong> ${endTime.toLocaleTimeString()}</p>
+          <p>Por favor, dirígete a tu vehículo para evitar cargos adicionales.</p>
+        </div>
+      `,
+    });
+
+    console.log("📧 [EMAIL] Alerta de vencimiento enviada: %s", info.messageId);
+    console.log("🔗 [PREVIEW] Ver correo: %s", require('nodemailer').getTestMessageUrl(info));
   }
 };

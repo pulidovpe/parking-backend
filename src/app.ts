@@ -10,6 +10,7 @@ import { reservationRoutes } from './routes/reservation.routes';
 import { paymentRoutes } from './routes/payment.routes';
 import { loyaltyRoutes } from './routes/loyalty.routes';
 import { analyticsRoutes } from './routes/analytics.routes';
+import { cronService } from './services/cron.service';
 
 export async function buildApp() {
   const app = Fastify({
@@ -61,6 +62,9 @@ export async function buildApp() {
       };
     }
   });
+
+  // Iniciar Cron Jobs
+  cronService.startJobs();
 
   // Auth routes
   await app.register(authRoutes, { prefix: '/api/auth' });
