@@ -20,7 +20,7 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [x] Lógica de creación y cancelación de reservas.
   - [x] Validación automática de disponibilidad en tiempo real por rango de tiempo.
   - [x] Historial de reservas por usuario. (`GET /my-history`)
-  - [ ] Sistema de notificaciones básicas. (PENDIENTE por implementar en FASE 1K)
+  - [x] Sistema de notificaciones básicas. (Implementado en FASE 1K)
 
 ## 💰 Fase 3: Sistema de Pagos
 - [x] **1H: Pagos (Enfoque Local):**
@@ -38,7 +38,7 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [x] Descuentos progresivos por nivel.
   - [x] Canje de puntos por beneficios (Pagar reserva con puntos).
   - [x] Historial de puntos (Endpoint /loyalty/me).
-  - [x] Notificaciones de logros (Console logs implementados).(PENDIENTE por implementar en FASE 1K)
+  - [x] Notificaciones de logros (Console logs implementados).
 
 ## 📊 Fases 5: Analytics y Reportes
 - [ ] **1J: Dashboard para managers con métricas:**
@@ -54,25 +54,26 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
 - [ ] **1K:Sistema de alertas por email/SMS:**
   - [x] Configuración de Nodemailer / Mailtrap (Ethereal).
   - [x] Emails transaccionales (Bienvenida).
-  - [x] Confirmación de reserva (Implementado en código).
-  - [ ] Notificación de pago recibido (Pendiente de implementación inmediata).
-  - [ ] Recordatorio 30 min antes (Depende de Fase 1L: Cron Jobs).
-  - [ ] Alerta de tiempo próximo a vencer (Depende de Fase 1L: Cron Jobs).
-  - [ ] SMS para eventos críticos (opcional) (Pendiente).
-  - [ ] Plantillas de notificaciones (Pendiente de mejora visual).
+  - [x] Confirmación de reserva.
+  - [x] Notificación de pago recibido.
+  - [x] Recordatorio 30 min antes (Depende de Fase 1L: Cron Jobs).
+  - [x] Alerta de tiempo próximo a vencer (Depende de Fase 1L: Cron Jobs).
+  - [x] Plantillas de notificaciones (El HTML actual ya cumple esta función).
+  - [ ] SMS para eventos críticos (POSTERGADO a migración AWS).
 
 ## ⏰ FASE 7: Sistema de Expiración Automática
 - [ ] **1L: Automatización de estados:**
-  - [ ] Job scheduler (cron) para verificar reservas
-  - [ ] Expirar reservas PENDING no activadas
-  - [ ] Liberar espacios automáticamente
+  - [x] Job scheduler (cron) configurado y corriendo.
+  - [x] Expirar reservas PENDING no activadas (Limpieza automática).
+  - [x] Liberar espacios automáticamente.
 
 ## 🔒 FASE 8: Seguridad Avanzada
 - [ ] **1M: Mejoras de seguridad:**
-  - [ ] Rate limiting por IP
-  - [ ] Refresh tokens para JWT
-  - [ ] Verificación de email
-  - [ ] 2FA (opcional)
+  - [ ] Rate limiting por IP.
+  - [ ] Refresh tokens para JWT.
+  - [ ] Verificación de email.
+  - [ ] 2FA (opcional).
+  - [ ] Logs de auditoría.
 
 - [ ] **Optimización:** Implementación de Cache con Redis y tests de calidad.
 - [ ] **Despliegue:** Configuración de CI/CD.
