@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
 import { env } from '../config/env';
+import { encryptionUtil } from '../utils/encryption.util';
 
 export class AuthService {
   
@@ -90,14 +91,16 @@ export class AuthService {
     // secret.otpauth_url ya viene listo, solo lo convertimos a imagen
     const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url!);
 
+    const encryptedSecret = encryptionUtil.encrypt(secret.base32); // Encriptamos
+
     // 3. Guardar secreto en BD
-    // IMPORTANTE: Guardamos 'base32' que es el formato estándar
+    // IMPORTANTE: Guardamos lo encriptado. 'base32' que es el formato estándar
     await prisma.user.update({
       where: { id: userId },
-      data: { twoFactorSecret: secret.base32 } 
+      data: { twoFactorSecret: encryptedSecret } 
     });
 
-    return { secret: secret.base32, qrCodeUrl };
+    return { secret: secret.base32, qrCodeUrl }; // Al usuario le mostramos el original
   }
 
   // B. Confirmar y Activar 2FA
@@ -105,9 +108,17 @@ export class AuthService {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user || !user.twoFactorSecret) throw new Error('Configuración de 2FA no iniciada');
 
+    // Desencriptamos lo que viene de la BD antes de verificar
+    let decryptedSecret;
+    try {
+        decryptedSecret = encryptionUtil.decrypt(user.twoFactorSecret);
+    } catch (e) {
+        throw new Error('Error de seguridad: Secreto inválido');
+    }
+
     // Verificar token usando speakeasy
     const isValid = speakeasy.totp.verify({
-      secret: user.twoFactorSecret,
+      secret: decryptedSecret, // Usamos la versión plana
       encoding: 'base32',
       token: token,
       window: 1 // Permite un margen de error de +/- 30 segundos por si el reloj está desfasado
@@ -170,9 +181,18 @@ export class AuthService {
         throw new Error('Código 2FA requerido'); 
       }
 
+      // Desencriptar el secreto almacenado
+      let decryptedSecret;
+      try {
+          decryptedSecret = encryptionUtil.decrypt(user.twoFactorSecret!);
+      } catch (e) {
+          // Si falla al desencriptar, es un error crítico de datos
+          throw new Error('Error interno de autenticación (Credencial corrupta)');
+      }
+
       // Validar código con speakeasy
       const isValid = speakeasy.totp.verify({ 
-        secret: user.twoFactorSecret!,
+        secret: decryptedSecret,
         encoding: 'base32',
         token: data.twoFactorCode,
         window: 1

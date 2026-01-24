@@ -3,6 +3,7 @@ import { AuthService } from '../services/auth.service';
 import { registerSchema, loginSchema } from '../schemas/auth.schema';
 import { ZodError } from 'zod';
 import { emailService } from '../services/email.service';
+import { auditService } from '../services/audit.service';
 
 const authService = new AuthService();
 
@@ -39,9 +40,30 @@ export class AuthController {
   }
 
   async login(request: FastifyRequest, reply: FastifyReply) {
+    const { email } = request.body as any; // Capturamos email para el log aunque falle
+    const ip = request.ip;
+    const userAgent = request.headers['user-agent'];
     try {
       const validatedData = loginSchema.parse(request.body);
       const result = await authService.login(validatedData);
+
+      // Determinamos el método usado
+      const loginMethod = result.user.twoFactorEnabled ? '2fa' : 'password_only';
+
+      // ✅ AUDITORÍA: LOGIN EXITOSO
+      await auditService.log({
+        userId: result.user.id,
+        action: 'LOGIN_SUCCESS',
+        resource: 'USER',
+        resourceId: result.user.id,
+        ipAddress: ip,
+        userAgent: userAgent,
+        // Guardamos el detalle
+        details: { 
+          method: loginMethod,
+          twoFactorEnabled: result.user.twoFactorEnabled 
+        }
+      });
 
       return reply.code(200).send({
         success: true,
@@ -49,6 +71,22 @@ export class AuthController {
         data: result,
       });
     } catch (error) {
+
+      // ❌ AUDITORÍA: LOGIN FALLIDO
+      // (Solo logueamos si sabemos el email, para no llenar la BD de basura anónima)
+      if (email) {
+        // Intentamos buscar el ID del usuario si existe, para vincularlo
+        // (Esto es opcional, pero ayuda a rastrear ataques a cuentas específicas)
+        // Por simplicidad, aquí solo guardamos el email en details
+         await auditService.log({
+          action: 'LOGIN_FAILED',
+          resource: 'USER',
+          details: { email, error: error.message },
+          ipAddress: ip,
+          userAgent: userAgent,
+        });
+      }
+
       // Manejo específico para login (401) si es error genérico
       if (error instanceof Error && error.message === 'Credenciales inválidas') {
          return reply.code(401).send({ success: false, message: error.message });

@@ -98,6 +98,8 @@ model User {
 
   loyaltyProfile LoyaltyProfile?  // El signo ? significa que es opcional (al inicio)
 
+  auditLogs    AuditLog[]
+
   @@map("users")
 }
 
@@ -326,4 +328,20 @@ model LoyaltyLog {
   profile        LoyaltyProfile @relation(fields: [profileId], references: [id])
   
   createdAt      DateTime     @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")      // Quién lo hizo (puede ser null si es un error de login)
+  action      String                        // Qué hizo (LOGIN, CREATE_RESERVATION, etc.)
+  resource    String?                       // Sobre qué (RESERVATION, USER, SYSTEM)
+  resourceId  String?  @map("resource_id")  // ID del objeto afectado
+  details     Json?                         // Datos extra (ej: razón de cancelación)
+  ipAddress   String?  @map("ip_address")   // Desde dónde
+  userAgent   String?  @map("user_agent")   // Qué dispositivo/navegador
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
 }
