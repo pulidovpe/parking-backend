@@ -69,13 +69,14 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
 
 ## 🔒 FASE 8: Seguridad Avanzada (EN PROGRESO)
 - [ ] **1M: Mejoras de seguridad:**
-  - [x] Rate limiting por IP (Implementando ahora).
-  - [x] Refresh tokens para JWT (Siguiente).
-  - [x] Verificación de email.
+  - [x] Rate Limiting: Protección contra ataques de fuerza bruta.
+  - [x] Refresh Tokens: Sesiones seguras y largas.
+  - [x] Verificación de Email: Identidad real de usuarios.
   - [x] Recuperación de contraseña (Optimizada a 8 chars).
-  - [x] 2FA (opcional).
-  - [ ] Logs de auditoría.
-  - [ ] Encriptación de datos sensibles.
+  - [x] Bloqueo (3 Strikes): Protección contra adivinación de claves.
+  - [x] 2FA (Google Authenticator): Seguridad de nivel bancario.
+  - [x] Auditoría: Logs forenses (AuditLog).
+  - [x] Encriptación de datos sensibles (secretos 2FA) cifrados en reposo.
 
 - [ ] **Optimización:** Implementación de Cache con Redis y tests de calidad.
 - [ ] **Despliegue:** Configuración de CI/CD.
