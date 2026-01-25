@@ -15,7 +15,7 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [x] Dashboard de disponibilidad en tiempo real y filtros avanzados.
 
 ## 🏗️ Fase 2: Sistema de Reservas
-- [x] **1G: Reservas:**
+- [x] **1G: Reservas:** Ciclo de vida completo, validación de rangos y notificaciones básicas.
   - [x] Definición del modelo de datos para Reservas.
   - [x] Lógica de creación y cancelación de reservas.
   - [x] Validación automática de disponibilidad en tiempo real por rango de tiempo.
@@ -23,7 +23,7 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [x] Sistema de notificaciones básicas. (Implementado en FASE 1K)
 
 ## 💰 Fase 3: Sistema de Pagos
-- [x] **1H: Pagos (Enfoque Local):**
+- [x] **1H: Pagos (Enfoque Local):** Reporte de pago móvil, verificación manual y soporte multivaluta (USD/VES).
   - [x] Modelo de Base de Datos (Transaction con soporte multivaluta).
   - [x] Endpoint de Reporte (Cálculo automático de USD/VES).
   - [x] Validación de Seguridad (Usuario correcto vs Reserva).
@@ -32,7 +32,7 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [x] Métricas Financieras (Manager).
 
 ## 🎁 Fase 4: Fidelización y Gamificación
-- [x] **1I: Sistema de Puntos:**
+- [x] **1I: Sistema de Puntos:** Membresías (Bronce/Plata/Oro), acumulación y canje de puntos.
   - [x] Lógica de acumulación automática de puntos.
   - [x] Niveles de membresía (Bronce, Plata, Oro).
   - [x] Descuentos progresivos por nivel.
@@ -41,7 +41,7 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [x] Notificaciones de logros (Console logs implementados).
 
 ## 📊 Fases 5: Analytics y Reportes
-- [ ] **1J: Dashboard para managers con métricas:**
+- [ ] **1J: Dashboard para managers con métricas:** Métricas de ocupación, ingresos, usuarios frecuentes y exportación CSV.
   - [x] Estadísticas de ocupación por día/semana/mes (Cubierto por `getOccupancyHeatmap` y KPIs).
   - [x] Ingresos totales y proyecciones (Ingresos listos en `getRevenueChart`; Proyecciones movidas a fases futuras de IA).
   - [x] Usuarios más frecuentes (Cubierto por `getTopUsers`).
@@ -51,7 +51,7 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [ ] Comparación entre parkings (Pendiente menor, el dashboard actual agrupa todo).
 
 ## 🔔 FASE 6: Notificaciones Avanzadas
-- [ ] **1K:Sistema de alertas por email/SMS:**
+- [ ] **1K:Sistema de alertas por email/SMS:** Emails transaccionales, recordatorios y alertas de vencimiento.
   - [x] Configuración de Nodemailer / Mailtrap (Ethereal).
   - [x] Emails transaccionales (Bienvenida).
   - [x] Confirmación de reserva.
@@ -62,21 +62,30 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [ ] SMS para eventos críticos (POSTERGADO a migración AWS).
 
 ## ⏰ FASE 7: Sistema de Expiración Automática
-- [ ] **1L: Automatización de estados:**
+- [ ] **1L: Automatización de estados:** Limpieza automática de reservas pendientes y expiradas.
   - [x] Job scheduler (cron) configurado y corriendo.
   - [x] Expirar reservas PENDING no activadas (Limpieza automática).
   - [x] Liberar espacios automáticamente.
 
-## 🔒 FASE 8: Seguridad Avanzada (EN PROGRESO)
-- [ ] **1M: Mejoras de seguridad:**
-  - [x] Rate Limiting: Protección contra ataques de fuerza bruta.
-  - [x] Refresh Tokens: Sesiones seguras y largas.
-  - [x] Verificación de Email: Identidad real de usuarios.
-  - [x] Recuperación de contraseña (Optimizada a 8 chars).
-  - [x] Bloqueo (3 Strikes): Protección contra adivinación de claves.
-  - [x] 2FA (Google Authenticator): Seguridad de nivel bancario.
-  - [x] Auditoría: Logs forenses (AuditLog).
-  - [x] Encriptación de datos sensibles (secretos 2FA) cifrados en reposo.
+## 🔒 FASE 8: Seguridad Avanzada (COMPLETADA) ✅
+- [x] **1M: Blindaje de la API:**
+  - [x] **Rate limiting:** Protección contra ataques de fuerza bruta y DDoS.
+  - [x] **Refresh Tokens:** Rotación de sesiones seguras.
+  - [x] **Verificación de Identidad:** Email obligatorio para activar cuenta.
+  - [x] **Recuperación de Cuenta:** Flujo seguro de reset password con tokens cortos.
+  - [x] **Bloqueo Inteligente:** Suspensión temporal tras 3 intentos fallidos.
+  - [x] **2FA (MFA):** Integración con Google Authenticator (TOTP).
+  - [x] **Auditoría Forense:** Logs inmutables de acciones críticas en BD.
+  - [x] **Encriptación:** Cifrado AES-256 para secretos en reposo.
 
-- [ ] **Optimización:** Implementación de Cache con Redis y tests de calidad.
-- [ ] **Despliegue:** Configuración de CI/CD.
+## ⚡ FASE 9: Optimización y Escala (SIGUIENTE)
+- [ ] **1N: Rendimiento:**
+  - [ ] Implementación de Cache con Redis para rutas de lectura frecuente.
+  - [ ] Optimización de consultas SQL/Prisma.
+- [ ] **1O: Calidad:**
+  - [ ] Tests Unitarios (Jest/Vitest).
+  - [ ] Tests de Integración.
+
+## 🚀 FASE 10: DevOps y Despliegue
+- [ ] **1P: CI/CD:** Pipelines de despliegue automático.
+- [ ] **1Q: Infraestructura Cloud:** Despliegue en AWS.
