@@ -87,10 +87,12 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [x] Tests de Autenticación (Registro, Login, Bloqueo).
   - [x] Tests de Reservas (Creación, Conflictos, Historial).
 
-## 🚀 FASE 10: DevOps y Despliegue (SIGUIENTE)
-- [ ] **1P: CI/CD (GitHub Actions):**
-  - [ ] Pipeline de Integración Continua (Correr tests automáticamente).
-  - [ ] Pipeline de Despliegue (Build de Docker).
-- [ ] **1Q: Infraestructura Cloud:**
-  - [ ] Configuración de Servidor (VPS/AWS).
-  - [ ] Despliegue final.
+## ✅ FASE 10: DevOps y Despliegue (EN PROGRESO)
+- [x] **1P: CI/CD (GitHub Actions):**
+  - [x] Pipeline de Integración Continua (Tests automatizados con Vitest).
+  - [x] Pipeline de Despliegue (Build Multi-Stage de Docker).
+  - [x] Integración con AWS ECR mediante OIDC (Seguridad sin llaves permanentes).
+- [ ] **1Q: Infraestructura Cloud (SIGUIENTE):**
+  - [ ] Configuración de Servidor (EC2 / ECS / App Runner).
+  - [ ] Despliegue de la aplicación desde ECR.
+  - [ ] Configuración de Dominio y SSL.
