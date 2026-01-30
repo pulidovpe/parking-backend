@@ -78,15 +78,19 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [x] **Auditoría Forense:** Logs inmutables de acciones críticas en BD.
   - [x] **Encriptación:** Cifrado AES-256 para secretos en reposo.
 
-## ⚡ FASE 9: Optimización y Escala (EN PROGRESO)
-- [x] **1N: Rendimiento (COMPLETADA):**
+## ⚡ FASE 9: Optimización y Escala
+- [x] **1N: Rendimiento:**
   - [x] Implementación de Cache con Redis para rutas de lectura frecuente.
   - [x] Optimización de consultas SQL/Prisma (Cubierto con índices en Schema y Redis).
-- [ ] **1O: Calidad (SIGUIENTE):**
-  - [ ] Configuración de entorno de pruebas (Vitest).
-  - [ ] Tests Unitarios y de Integración (Auth, Reservas).
-- [ ] **1P: CI/CD:**
-  - [ ] Pipelines de despliegue automático (GitHub Actions).
+- [x] **1O: Calidad:**
+  - [x] Configuración de Vitest + Supertest.
+  - [x] Tests de Autenticación (Registro, Login, Bloqueo).
+  - [x] Tests de Reservas (Creación, Conflictos, Historial).
 
-## 🚀 FASE 10: Infraestructura (FUTURO)
-- [ ] Despliegue en nube (AWS/DigitalOcean).
+## 🚀 FASE 10: DevOps y Despliegue (SIGUIENTE)
+- [ ] **1P: CI/CD (GitHub Actions):**
+  - [ ] Pipeline de Integración Continua (Correr tests automáticamente).
+  - [ ] Pipeline de Despliegue (Build de Docker).
+- [ ] **1Q: Infraestructura Cloud:**
+  - [ ] Configuración de Servidor (VPS/AWS).
+  - [ ] Despliegue final.
