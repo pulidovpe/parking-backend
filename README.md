@@ -1,5 +1,7 @@
 # Parking Backend 🚗🅿️
 
+![Parking Backend CI](https://github.com/pulidovpe/parking-backend/actions/workflows/ci.yml/badge.svg)
+
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![Fastify](https://img.shields.io/badge/Fastify-5.x-black.svg)](https://www.fastify.io/)
