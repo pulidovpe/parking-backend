@@ -1,0 +1,93 @@
+name: Parking Backend CI
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    name: Run Tests & Checks
+    runs-on: ubuntu-latest
+
+    # Servicios (Docker) necesarios para los tests
+    services:
+      # Base de datos PostGIS
+      postgres:
+        image: postgis/postgis:15-3.3-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: parking_test
+        ports:
+          - 5432:5432
+        # Healthcheck para esperar a que la DB esté lista
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      # Redis (Para el caché)
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    # Pasos del trabajo
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # Generar Cliente de Prisma
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      # Crear Schema en la DB de Pruebas (Push es mejor que Migrate para CI)
+      - name: Push Database Schema
+        run: npx prisma db push
+        env:
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/parking_test?schema=public"
+
+      # Ejecutar Tests (Vitest)
+      - name: Run Tests
+        run: npm test
+        env:
+          # Variables requeridas por src/config/env.ts
+          NODE_ENV: "test"
+          PORT: "3000"
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/parking_test?schema=public"
+          
+          # Redis
+          REDIS_HOST: "localhost"
+          REDIS_PORT: "6379"
+          
+          # JWT (Valores dummy para test)
+          JWT_SECRET: "super_secret_test_key_123456789"
+          JWT_REFRESH_SECRET: "super_refresh_test_key_987654321"
+          JWT_EXPIRES_IN: "15m"
+          
+          # Seguridad
+          ENCRYPTION_KEY: "12345678901234567890123456789012" # 32 chars exactos
+          
+          # SMTP (Valores dummy, los tests usan mocks o Ethereal, pero Zod requiere que existan)
+          SMTP_HOST: "smtp.ethereal.email"
+          SMTP_PORT: "587"
+          SMTP_USER: "dummy_user"
+          SMTP_PASS: "dummy_pass"
+          SMTP_FROM: "noreply@parkingapp.com"
