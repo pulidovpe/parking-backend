@@ -214,8 +214,9 @@ export class ReservationService {
 
     return updated;
   }
-
   // Completar una reserva (cuando el usuario sale)
+
+
   async completeReservation(id: string, userId: string) {
     const reservation = await prisma.reservation.findUnique({
       where: { id },
@@ -518,5 +519,30 @@ export class ReservationService {
     });
 
     return updated;
+  }
+
+  // Obtener historial de reservas de un usuario
+  async getMyHistory(userId: string) {
+    return prisma.reservation.findMany({
+      where: { userId },
+      include: {
+        parking: { 
+          select: { 
+            name: true, 
+            address: true, 
+            city: true 
+          } 
+        },
+        space: { 
+          select: { 
+            spaceNumber: true, 
+            level: { 
+              select: { levelName: true } 
+            } 
+          } 
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
   }
 }

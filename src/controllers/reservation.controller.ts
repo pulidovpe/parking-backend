@@ -11,7 +11,14 @@ import { ZodError } from 'zod';
 const reservationService = new ReservationService();
 
 export class ReservationController {
-  async createReservation(request: FastifyRequest, reply: FastifyReply) {
+  private reservationService: ReservationService;
+
+  constructor() {
+    this.reservationService = new ReservationService();
+  }
+
+  //async createReservation(request: FastifyRequest, reply: FastifyReply) {
+  createReservation = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       if (!request.user) {
         return reply.code(401).send({
@@ -58,7 +65,8 @@ export class ReservationController {
     }
   }
 
-  async activateReservation(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+  //async activateReservation(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+  activateReservation = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     try {
       if (!request.user) {
         return reply.code(401).send({
@@ -92,7 +100,8 @@ export class ReservationController {
     }
   }
 
-  async completeReservation(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+  //async completeReservation(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+  completeReservation = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     try {
       if (!request.user) {
         return reply.code(401).send({
@@ -126,7 +135,8 @@ export class ReservationController {
     }
   }
 
-  async cancelReservation(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+  //async cancelReservation(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+  cancelReservation = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     try {
       if (!request.user) {
         return reply.code(401).send({
@@ -174,7 +184,8 @@ export class ReservationController {
     }
   }
 
-  async getReservations(request: FastifyRequest, reply: FastifyReply) {
+  //async getReservations(request: FastifyRequest, reply: FastifyReply) {
+  getReservations = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       if (!request.user) {
         return reply.code(401).send({
@@ -220,7 +231,8 @@ export class ReservationController {
     }
   }
 
-  async getReservationById(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+  //async getReservationById(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+  getReservationById = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     try {
       if (!request.user) {
         return reply.code(401).send({
@@ -265,7 +277,8 @@ export class ReservationController {
     }
   }
 
-  async updateReservation(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+  //async updateReservation(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+  updateReservation = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     try {
       if (!request.user) {
         return reply.code(401).send({
@@ -313,18 +326,15 @@ export class ReservationController {
     }
   }
 
-  // NUEVO: Historial personal del usuario
-  async getMyHistory(req: FastifyRequest, reply: FastifyReply) {
+  // Historial personal del usuario
+  //async getMyHistory(req: FastifyRequest, reply: FastifyReply) {
+  getMyHistory = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const user = req.user as any;
-      const userId = user.id || user.userId || user.sub;
-
-      // Reutilizamos el servicio pero forzamos el filtro userId
-      const reservations = await this.reservationService.getReservations({ userId });
-      
+      // Ahora 'request' sí existe aquí dentro
+      const reservations = await this.reservationService.getMyHistory(request.user.userId);
       return reply.send({ success: true, data: reservations });
     } catch (error: any) {
-      return reply.code(500).send({ success: false, error: error.message });
+      return reply.code(500).send({ success: false, message: error.message });
     }
   }
 }
