@@ -1,83 +1,137 @@
 # Parking Backend 🚗🅿️
 
-Backend robusto para gestión de estacionamientos, construido con tecnologías modernas y **estándares de seguridad empresarial**.
+[![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![Fastify](https://img.shields.io/badge/Fastify-5.x-black.svg)](https://www.fastify.io/)
+[![Prisma](https://img.shields.io/badge/Prisma-5.x-black.svg)](https://www.prisma.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-red.svg)](https://redis.io/)
+
+Backend robusto y escalable para la gestión integral de estacionamientos, diseñado bajo una arquitectura orientada a servicios y **estándares de seguridad empresarial**.
+
+---
+
+## 🌟 Características Principales
+
+### 🔐 Seguridad de Nivel Bancario
+*   **MFA/2FA:** Autenticación de doble factor vía TOTP (Google Authenticator / Authy).
+*   **Gestión de Sesiones:** Sistema de Access Tokens (15 min) & Refresh Tokens (7 días) con rotación automática.
+*   **Protección Dinámica:** Rate limiting global contra fuerza bruta y bloqueo automático de cuentas tras 3 intentos fallidos.
+*   **Auditoría:** Registro inmutable de acciones críticas (Audit Logs) en la base de datos.
+*   **Cifrado:** Secretos sensibles y datos privados protegidos con AES-256 en reposo.
+*   **Verificación:** Validación obligatoria de email para activación de cuenta.
+
+### 🚗 Core de Negocio
+*   **Geolocalización:** Búsqueda avanzada de estacionamientos cercanos mediante PostGIS (GPS).
+*   **Reservas Inteligentes:** Control de disponibilidad en tiempo real y validación de rangos horários.
+*   **Mapa de Espacios:** Visualización jerárquica por niveles y tipos de plaza.
+*   **Automatización:** Cron jobs para la limpieza de reservas pendientes no activadas y liberación automática de espacios.
+
+### 💰 Finanzas y Lealtad
+*   **Pagos Multimoneda:** Soporte para USD y VES con reporte de pago móvil y conversión dinámica.
+*   **Sistema de Puntos (Loyalty):** Gamificación con niveles (Bronce, Plata, Oro) y acumulación automática de puntos canjeables.
+*   **Analytics:** Dashboard administrativo con KPIs financieros, tasa de ocupación y exportación de datos en CSV.
+
+---
 
 ## 🛠️ Stack Tecnológico
 
-- **Core:** [Node.js](https://nodejs.org/) + [TypeScript](https://www.typescriptlang.org/) + [Fastify](https://www.fastify.io/)
-- **Base de Datos:** [PostgreSQL](https://www.postgresql.org/) (Datos), [PostGIS](https://postgis.net/) (Geo), [Redis](https://redis.io/) (Cache/Colas).
-- **ORM:** [Prisma](https://www.prisma.io/).
-- **Seguridad:** [JWT](https://jwt.io/), [Bcrypt](https://github.com/dcodeIO/bcrypt.js), [Speakeasy](https://github.com/speakeasyjs/speakeasy) (2FA), AES-256.
-- **Utilidades:** [Nodemailer](https://nodemailer.com/), [Zod](https://zod.dev/), [Node-Cron](https://github.com/node-cron/node-cron).
+*   **Core:** [Node.js](https://nodejs.org/) + [TypeScript](https://www.typescriptlang.org/) + [Fastify](https://www.fastify.io/)
+*   **Base de Datos:** [PostgreSQL](https://www.postgresql.org/) (Datos), [PostGIS](https://postgis.net/) (Geo), [Redis](https://redis.io/) (Cache/Colas).
+*   **ORM:** [Prisma](https://www.prisma.io/).
+*   **Seguridad:** [JWT](https://jwt.io/), [Bcrypt](https://github.com/dcodeIO/bcrypt.js), [Speakeasy](https://github.com/speakeasyjs/speakeasy) (2FA).
+*   **Utilidades:** [Nodemailer](https://nodemailer.com/), [Zod](https://zod.dev/), [Node-Cron](https://github.com/node-cron/node-cron).
 
-## 🛡️ Características de Seguridad
+---
 
-Este backend implementa medidas de protección avanzadas:
-* ✅ **2FA (Doble Factor):** Soporte para Google Authenticator / Authy.
-* ✅ **Rate Limiting:** Protección global contra fuerza bruta y DDoS.
-* ✅ **Auditoría (Audit Logs):** Registro inmutable de quién hizo qué y cuándo.
-* ✅ **Encriptación en Reposo:** Los secretos sensibles se cifran con AES-256 en la BD.
-* ✅ **Gestión de Sesiones:** Access Tokens (15 min) + Refresh Tokens (7 días) con rotación.
-* ✅ **Protección de Cuenta:** Bloqueo automático tras 3 intentos fallidos de login.
+## 📁 Estructura del Proyecto
 
-## 🚀 Funcionalidades de Negocio
-- **Gestión Geográfica:** Búsqueda de parkings por cercanía (GPS).
-- **Reservas Inteligentes:** Validación de disponibilidad en tiempo real y cron jobs para auto-cancelación.
-- **Pagos y Monedas:** Soporte multimoneda (USD/VES) con tasa de cambio dinámica.
-- **Fidelización (Loyalty):** Sistema de gamificación con niveles (Bronce/Plata/Oro) y puntos canjeables.
-- **Analytics:** Dashboard administrativo con métricas financieras y operativas.
+```text
+parking-backend/
+├── prisma/               # Schema, modelos y migraciones de BD
+├── src/
+│   ├── config/           # Configuraciones (DB, Env, Mailer)
+│   ├── controllers/      # Handlers de rutas (Lógica de entrada/salida)
+│   ├── middlewares/      # Filtros de seguridad (Auth, Rate Limit)
+│   ├── routes/           # Definición de rutas de la API
+│   ├── services/         # Lógica de negocio core
+│   ├── schemas/          # Validaciones de datos con Zod
+│   ├── utils/            # Herramientas (Cifrado, JWT, Password)
+│   ├── types/            # Tipado global de TypeScript
+│   ├── app.ts            # Configuración de Fastify y plugins
+│   └── server.ts         # Arranque del servidor
+├── tests/                # Suites de pruebas (Vitest + Supertest)
+└── plans/                # Roadmap, documentación de APIs y diseño
+```
 
-## 🔌 Endpoints Principales
+---
 
-Todos los endpoints (excepto Auth público) requieren el header: `Authorization: Bearer <access_token>`.
+## 🚀 Instalación y Despliegue
 
-### 🔐 Autenticación y Seguridad
-| Método | Endpoint | Descripción | Campos Requeridos (Body/Query) | Datos Devueltos |
-| :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/register` | Registro de usuario. | **Body:** `email`, `password`, `firstName`, `lastName`, `phone`, `role` | `{ success: true, message: "..." }` (Sin tokens, requiere verificar email) |
-| `POST` | `/api/auth/login` | Inicio de sesión. | **Body:** `email`, `password`, `twoFactorCode` (opcional si tiene 2FA) | `{ user, accessToken, refreshToken }` |
-| `POST` | `/api/auth/refresh` | Renovar sesión vencida. | **Body:** `refreshToken` | `{ accessToken, refreshToken }` (Nuevos) |
-| `GET` | `/api/auth/verify` | Validar email. | **Query:** `token` (del correo) | `{ success: true, message: "..." }` |
-| `POST` | `/api/auth/forgot-password` | Pedir recuperación. | **Body:** `email` | `{ message: "Si existe, enviamos correo..." }` |
-| `POST` | `/api/auth/reset-password` | Cambiar clave. | **Body:** `token` (8 chars), `newPassword` | `{ success: true, message: "..." }` |
-| `POST` | `/api/auth/2fa/setup` | Iniciar configuración 2FA. | **Header:** `Authorization` <br> **Body:** `{}` | `{ secret, qrCodeUrl }` |
-| `POST` | `/api/auth/2fa/enable` | Activar 2FA. | **Body:** `token` (Código de 6 dígitos) | `{ success: true, message: "2FA activado" }` |
+### 1. Variables de Entorno
+Renombrar `.env.example` a `.env` y configurar las llaves esenciales:
+*   `DATABASE_URL`: Conexión a Postgres.
+*   `JWT_SECRET` & `JWT_REFRESH_SECRET`.
+*   `ENCRYPTION_KEY`: Generar con `openssl rand -hex 32`.
+*   Credenciales SMTP para notificaciones por correo.
 
-### 🚗 Core (Parkings y Reservas)
-| Método | Endpoint | Descripción | Campos Requeridos (Body/Query) | Datos Devueltos |
-| :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/api/parkings/nearby` | Buscar por cercanía. | **Query:** `latitude`, `longitude`, `radius` (km, opcional) | `[ { id, name, distance, ... } ]` |
-| `GET` | `/api/spaces/parking/:id` | Ver mapa de espacios. | **Params:** `id` (parkingId) | `{ levels: [ { name, spaces: [] } ] }` |
-| `POST` | `/api/reservations` | Crear reserva. | **Body:** `parkingId`, `spaceId`, `startTime`, `estimatedEndTime` | `{ id, status: "PENDING", totalCost, ... }` |
-| `PATCH` | `/api/reservations/:id/activate` | Check-in (Entrada). | **Params:** `id` (reservationId) | `{ id, status: "ACTIVE", actualStartTime }` |
-| `GET` | `/api/reservations/my-history` | Historial usuario. | **Header:** `Authorization` | `[ { id, parkingName, status, cost } ]` |
+### 2. Levantar Infraestructura (Docker)
+El proyecto incluye un entorno listo con Postgres, PostGIS, Redis y pgAdmin:
+```bash
+npm run docker:up
+```
 
-### 💸 Finanzas (Pagos y Puntos)
-| Método | Endpoint | Descripción | Campos Requeridos (Body/Query) | Datos Devueltos |
-| :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/api/payments/report` | Reportar pago. | **Body:** `reservationId`, `amount`, `currency` (USD/VES), `referenceId`, `method` | `{ id, status: "PENDING", amountInUsd }` |
-| `PUT` | `/api/payments/:id/verify` | Validar pago (Manager). | **Params:** `id` (transactionId) | `{ id, status: "VERIFIED", verifiedBy }` |
-| `GET` | `/api/loyalty/me` | Ver perfil de lealtad. | **Header:** `Authorization` | `{ pointsBalance, tier, lifetimePoints }` |
+### 3. Inicializar Base de Datos
+```bash
+npm run prisma:migrate
+npm run prisma:generate
+```
 
-### 📊 Analytics (Solo Managers)
-| Método | Endpoint | Descripción | Campos Requeridos (Body/Query) | Datos Devueltos |
-| :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/api/analytics/dashboard` | KPIs del negocio. | **Header:** `Authorization` | `{ revenue: { daily, monthly }, occupancyRate, topUsers }` |
-| `GET` | `/api/analytics/export` | Exportar datos. | **Query:** `format=csv` | Archivo descargable `.csv` |
+### 4. Ejecución
+```bash
+# Modo Desarrollo (Hot reload)
+npm run dev
 
-## 🛠️ Instalación y Despliegue
+# Construcción y Producción
+npm run build
+npm run start
+```
 
-1. **Variables de Entorno:** Renombrar `.env.example` a `.env` y configurar:
-   - `DATABASE_URL` (Postgres)
-   - `JWT_SECRET`, `JWT_REFRESH_SECRET`
-   - `ENCRYPTION_KEY` (Generar con `openssl rand -hex 32`)
-   - Credenciales SMTP (Ethereal/Gmail/AWS)
+---
 
-2. **Docker:** `npm run docker:up`
-3. **Base de Datos:** `npm run prisma:migrate`
-4. **Desarrollo:** `npm run dev`
+## 🧪 Calidad y Testing
+
+Se utilizan **Vitest** y **Supertest** para asegurar el correcto funcionamiento de los flujos críticos.
+```bash
+# Correr suite completa
+npm test
+
+# Modo UI (Interactivo)
+npm run test:ui
+```
+
+---
+
+## 🔌 API Endpoints
+
+Debido a la extensión de la API, la documentación detallada de cada endpoint, sus parámetros y formatos de respuesta se ha movido a su propio archivo:
+
+👉 **[Documentación Detallada de Endpoints](plans/endpoints.md)**
+
+### Resumen de Rutas Principales:
+| Módulo | Prefijo | Descripción |
+| :--- | :--- | :--- |
+| **Auth** | `/api/auth` | Login, Registro, 2FA, Recuperación. |
+| **Parkings** | `/api/parkings` | Búsqueda GPS y gestión de parkings. |
+| **Reservas** | `/api/reservations` | Ciclo de vida de la reserva y check-in. |
+| **Pagos** | `/api/payments` | Reporte y verificación de transacciones. |
+| **Loyalty** | `/api/loyalty` | Gestión de puntos y niveles de usuario. |
+| **Analytics** | `/api/analytics`| Métricas y reportes administrativos. |
+
+---
 
 ## 🗺️ Roadmap
-Puedes consultar el plan detallado de desarrollo y las fases futuras en el [Roadmap de Desarrollo](plans/roadmap.md).
+Consulta el estado de las fases de desarrollo, desde los cimientos hasta el despliegue cloud en el [Roadmap del Proyecto](plans/roadmap.md).
+
 ---
 *Backend v1.0 - Fase de Seguridad Completada*
