@@ -2,13 +2,13 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import { ParkingService } from '../services/parking.service';
 import { createParkingSchema, updateParkingSchema, searchParkingSchema } from '../schemas/parking.schema';
 import { ZodError } from 'zod';
+import { cacheService } from '../services/cache.service'; // Servicio de caché propuesto
 
 const parkingService = new ParkingService();
 
 export class ParkingController {
   async create(request: FastifyRequest, reply: FastifyReply) {
     try {
-      // Verificar que el usuario es PARKING_MANAGER
       if (request.user?.role !== 'PARKING_MANAGER' && request.user?.role !== 'ADMIN') {
         return reply.code(403).send({
           success: false,
@@ -25,41 +25,13 @@ export class ParkingController {
         data: result,
       });
     } catch (error) {
-      console.error('Error en create parking:', error);
-
-      if (error instanceof ZodError) {
-        const formattedErrors = error.issues.map((issue) => ({
-          field: issue.path.join('.'),
-          message: issue.message,
-        }));
-
-        return reply.code(400).send({
-          success: false,
-          message: 'Error de validación',
-          errors: formattedErrors,
-        });
-      }
-
-      if (error instanceof Error) {
-        return reply.code(400).send({
-          success: false,
-          message: error.message,
-        });
-      }
-
-      return reply.code(500).send({
-        success: false,
-        message: 'Error interno del servidor',
-      });
+      return this.handleError(error, reply, 'Error en create parking');
     }
   }
 
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     try {
-      // Si es PARKING_MANAGER, solo sus parkings
-      // Si es ADMIN o DRIVER, todos los parkings
       const managerId = request.user?.role === 'PARKING_MANAGER' ? request.user.userId : undefined;
-
       const parkings = await parkingService.findAll(managerId);
 
       return reply.code(200).send({
@@ -69,11 +41,7 @@ export class ParkingController {
       });
     } catch (error) {
       console.error('Error en findAll parkings:', error);
-
-      return reply.code(500).send({
-        success: false,
-        message: 'Error al obtener estacionamientos',
-      });
+      return reply.code(500).send({ success: false, message: 'Error al obtener estacionamientos' });
     }
   }
 
@@ -83,23 +51,13 @@ export class ParkingController {
       const parking = await parkingService.findById(id);
 
       if (!parking) {
-        return reply.code(404).send({
-          success: false,
-          message: 'Estacionamiento no encontrado',
-        });
+        return reply.code(404).send({ success: false, message: 'Estacionamiento no encontrado' });
       }
 
-      return reply.code(200).send({
-        success: true,
-        data: parking,
-      });
+      return reply.code(200).send({ success: true, data: parking });
     } catch (error) {
       console.error('Error en findById parking:', error);
-
-      return reply.code(500).send({
-        success: false,
-        message: 'Error al obtener estacionamiento',
-      });
+      return reply.code(500).send({ success: false, message: 'Error al obtener estacionamiento' });
     }
   }
 
@@ -122,32 +80,7 @@ export class ParkingController {
         data: result,
       });
     } catch (error) {
-      console.error('Error en update parking:', error);
-
-      if (error instanceof ZodError) {
-        const formattedErrors = error.issues.map((issue) => ({
-          field: issue.path.join('.'),
-          message: issue.message,
-        }));
-
-        return reply.code(400).send({
-          success: false,
-          message: 'Error de validación',
-          errors: formattedErrors,
-        });
-      }
-
-      if (error instanceof Error) {
-        return reply.code(400).send({
-          success: false,
-          message: error.message,
-        });
-      }
-
-      return reply.code(500).send({
-        success: false,
-        message: 'Error interno del servidor',
-      });
+      return this.handleError(error, reply, 'Error en update parking');
     }
   }
 
@@ -163,24 +96,9 @@ export class ParkingController {
       const { id } = request.params;
       const result = await parkingService.delete(id, request.user.userId);
 
-      return reply.code(200).send({
-        success: true,
-        message: result.message,
-      });
+      return reply.code(200).send({ success: true, message: result.message });
     } catch (error) {
-      console.error('Error en delete parking:', error);
-
-      if (error instanceof Error) {
-        return reply.code(400).send({
-          success: false,
-          message: error.message,
-        });
-      }
-
-      return reply.code(500).send({
-        success: false,
-        message: 'Error interno del servidor',
-      });
+      return this.handleError(error, reply, 'Error en delete parking');
     }
   }
 
@@ -188,12 +106,34 @@ export class ParkingController {
     try {
       const validatedData = searchParkingSchema.parse(request.query);
 
+      // 1. Generar Key de caché (Coordenadas redondeadas a 3 decimales para mayor eficiencia)
+      const latKey = validatedData.latitude.toFixed(3);
+      const lonKey = validatedData.longitude.toFixed(3);
+      const radiusKey = validatedData.radiusKm || 5;
+      const cacheKey = `parkings:nearby:${latKey}:${lonKey}:${radiusKey}:${validatedData.limit || 10}`;
+
+      // 2. Intentar obtener de Redis
+      const cachedResults = await cacheService.get<any[]>(cacheKey);
+      if (cachedResults) {
+        request.log.info(`⚡ Cache HIT para ${cacheKey}`);
+        return reply.code(200).send({
+          success: true,
+          data: cachedResults,
+          count: cachedResults.length,
+          fromCache: true
+        });
+      }
+
+      // 3. Consultar Base de Datos si no hay caché
       const results = await parkingService.searchNearby(
         validatedData.latitude,
         validatedData.longitude,
         validatedData.radiusKm,
         validatedData.limit
       );
+
+      // 4. Guardar en Redis (TTL: 5 minutos / 300 segundos)
+      await cacheService.set(cacheKey, results, 300);
 
       return reply.code(200).send({
         success: true,
@@ -206,25 +146,31 @@ export class ParkingController {
         },
       });
     } catch (error) {
-      console.error('Error en searchNearby:', error);
+      return this.handleError(error, reply, 'Error en searchNearby');
+    }
+  }
 
-      if (error instanceof ZodError) {
-        const formattedErrors = error.issues.map((issue) => ({
-          field: issue.path.join('.'),
-          message: issue.message,
-        }));
+  // Refactorización del manejo de errores para limpieza del código
+  private handleError(error: any, reply: FastifyReply, logMessage: string) {
+    console.error(`${logMessage}:`, error);
 
-        return reply.code(400).send({
-          success: false,
-          message: 'Error de validación',
-          errors: formattedErrors,
-        });
-      }
+    if (error instanceof ZodError) {
+      const formattedErrors = error.issues.map((issue) => ({
+        field: issue.path.join('.'),
+        message: issue.message,
+      }));
 
-      return reply.code(500).send({
+      return reply.code(400).send({
         success: false,
-        message: 'Error al buscar estacionamientos cercanos',
+        message: 'Error de validación',
+        errors: formattedErrors,
       });
     }
+
+    if (error instanceof Error) {
+      return reply.code(400).send({ success: false, message: error.message });
+    }
+
+    return reply.code(500).send({ success: false, message: 'Error interno del servidor' });
   }
 }

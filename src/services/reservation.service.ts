@@ -8,6 +8,7 @@ import type {
 import { loyaltyService } from './loyalty.service';
 import { PointSource } from '@prisma/client';
 import { emailService } from '../services/email.service';
+import { cacheService } from './cache.service'; // ✅ IMPORTADO
 
 export class ReservationService {
   // Crear una reserva
@@ -143,6 +144,9 @@ export class ReservationService {
         console.error("⚠️ No se pudo enviar el correo de confirmación:", error);
     }
 
+    // 💥 REDIS: Invalidar caché del parking
+    await cacheService.del(`spaces:availability:${data.parkingId}`);
+
     return reservation;
   }
 
@@ -204,6 +208,9 @@ export class ReservationService {
       where: { id: reservation.spaceId },
       data: { status: 'OCCUPIED' },
     });
+
+    // 💥 REDIS: Invalidar caché
+    await cacheService.del(`spaces:availability:${reservation.parkingId}`);
 
     return updated;
   }
@@ -296,6 +303,9 @@ export class ReservationService {
       data: { status: 'AVAILABLE' },
     });
 
+    // 💥 REDIS: Invalidar caché
+    await cacheService.del(`spaces:availability:${reservation.parkingId}`);
+
     return updated;
   }
 
@@ -355,6 +365,9 @@ export class ReservationService {
         data: { status: 'AVAILABLE' },
       });
     }
+
+    // 💥 REDIS: Invalidar caché
+    await cacheService.del(`spaces:availability:${reservation.parkingId}`);
 
     return updated;
   }

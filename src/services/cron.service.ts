@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import prisma from '../config/database';
 import { emailService } from './email.service';
+import { cacheService } from './cache.service'; // ✅ IMPORTADO
 
 export const cronService = {
   
@@ -34,7 +35,8 @@ export const cronService = {
       where: {
         status: 'PENDING',
         createdAt: { lte: timeLimit }
-      }
+      },
+      include: { space: true } // Traemos espacio para saber el parkingId
     });
 
     if (expiredReservations.length > 0) {
@@ -56,6 +58,11 @@ export const cronService = {
           })
         ]);
         console.log(`🗑️ Reserva ${res.id} cancelada automáticamente.`);
+
+        // 💥 REDIS: Invalidar caché para reflejar disponibilidad
+        if (res.parkingId) {
+            await cacheService.del(`spaces:availability:${res.parkingId}`);
+        }
       }
     }
   },

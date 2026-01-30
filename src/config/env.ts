@@ -3,20 +3,43 @@ import z from 'zod';
 
 dotenv.config();
 
+// Definición del esquema de validación
+const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  PORT: z.string().default('3000'),
+  HOST: z.string().default('0.0.0.0'),
+  DATABASE_URL: z.string().min(1, "DATABASE_URL es requerida"),
+  REDIS_HOST: z.string().default('localhost'),
+  REDIS_PORT: z.string().default('6379'),
+  JWT_SECRET: z.string().min(1, "JWT_SECRET es requerida"),
+  JWT_EXPIRES_IN: z.string().default('15m'),
+  JWT_REFRESH_SECRET: z.string().min(1, "JWT_REFRESH_SECRET es requerida"),
+  ENCRYPTION_KEY: z.string().min(1, "ENCRYPTION_KEY es requerida"),
+});
+
+// Validación de las variables de proceso
+const _env = envSchema.safeParse(process.env);
+
+if (!_env.success) {
+  console.error('❌ Variables de entorno inválidas:', _env.error.format());
+  process.exit(1);
+}
+
+// Exportación del objeto env tipado y validado
 export const env = {
-  nodeEnv: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.PORT || '3000', 10),
-  host: process.env.HOST || '0.0.0.0',
-  databaseUrl: process.env.DATABASE_URL || '',
+  nodeEnv: _env.data.NODE_ENV,
+  port: parseInt(_env.data.PORT, 10),
+  host: _env.data.HOST,
+  databaseUrl: _env.data.DATABASE_URL,
   redis: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    host: _env.data.REDIS_HOST,
+    port: parseInt(_env.data.REDIS_PORT, 10),
   },
   jwt: {
-    secret: process.env.JWT_SECRET || 'default_secret_change_me',
-    expiresIn: process.env.JWT_EXPIRES_IN || '15m',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'default_refresh_secret',
-    refreshExpiresIn: '7d',
+    secret: _env.data.JWT_SECRET,
+    expiresIn: _env.data.JWT_EXPIRES_IN,
+    refreshSecret: _env.data.JWT_REFRESH_SECRET,
+    refreshExpiresIn: '7d', // Mantenemos tu valor fijo
   },
-  encryptionKey: process.env.ENCRYPTION_KEY || '',
+  encryptionKey: _env.data.ENCRYPTION_KEY,
 };
