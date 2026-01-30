@@ -91,3 +91,31 @@ jobs:
           SMTP_USER: "dummy_user"
           SMTP_PASS: "dummy_pass"
           SMTP_FROM: "noreply@parkingapp.com"
+
+  # --- TRABAJO 2: BUILD (NUEVO) ---
+  build:
+    name: Build Docker Image
+    needs: test # Importante: Solo corre si los tests pasan
+    runs-on: ubuntu-latest
+    
+    # Solo construimos la imagen si estamos en la rama principal
+    # (Se puede quitar este 'if' para probar el build en todas las ramas)
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Construye la imagen usando tu Dockerfile
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false # Por ahora solo build, no subir a DockerHub
+          tags: parking-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
