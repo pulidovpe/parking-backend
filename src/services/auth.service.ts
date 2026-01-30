@@ -2,6 +2,7 @@ import prisma from '../config/database';
 import { hashPassword, comparePassword } from '../utils/password.util';
 import type { RegisterInput, LoginInput } from '../schemas/auth.schema';
 import jwt from 'jsonwebtoken';
+import { generateToken, generateRefreshToken } from '../utils/jwt.util';
 import crypto from 'crypto';
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
@@ -13,18 +14,16 @@ export class AuthService {
   // Helper privado para generar el par de tokens
   private generateTokens(user: { id: string; email: string; role: string }) {
     // 1. Access Token (Corto plazo - 15m)
-    const accessToken = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      env.jwt.secret,
-      { expiresIn: env.jwt.expiresIn }
-    );
+    const accessToken = generateToken({ 
+        userId: user.id, 
+        email: user.email, 
+        role: user.role 
+    });
 
     // 2. Refresh Token (Largo plazo - 7d)
-    const refreshToken = jwt.sign(
-      { userId: user.id }, // Payload mínimo
-      env.jwt.refreshSecret,
-      { expiresIn: env.jwt.refreshExpiresIn }
-    );
+    const refreshToken = generateRefreshToken({ 
+        userId: user.id 
+    });
 
     return { accessToken, refreshToken };
   }

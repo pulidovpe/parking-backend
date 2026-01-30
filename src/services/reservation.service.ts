@@ -133,11 +133,10 @@ export class ReservationService {
     try {
         if (reservation.user.email) {
             await emailService.sendReservationConfirmation(
-                reservation.user.email,
-                reservation.user.firstName,
-                reservation.parking.name,
-                reservation.startTime,
-                reservation.estimatedCost
+              reservation.user.email,              // 1. to (Email)
+              reservation.parking.name,            // 2. parkingName (Nombre del Parking)
+              reservation.startTime,               // 3. date (Fecha)
+              Number(reservation.estimatedCost)    // 4. total (Costo - convertido a número)
             );
         }
     } catch (error) {

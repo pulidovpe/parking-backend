@@ -56,7 +56,7 @@ export const paymentController = {
   // GET /payments/pending (Solo Managers)
   async getPending(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const managerId = req.user.id;
+      const managerId = req.user.userId;
       const pending = await paymentService.getPendingTransactions(managerId);
       return reply.send(pending);
     } catch (error: any) {

@@ -17,9 +17,6 @@ export const paymentService = {
       throw new Error('Reserva no encontrada');
     }
 
-    // LOG DE SEGURIDAD
-    //console.log('Comparando reserva.userId:', reservation.userId, 'con userId del token:', userId);
-
     if (reservation.userId !== userId) {
         throw new Error(`No tienes permiso para pagar esta reserva. Propietario: ${reservation.userId}, Tú: ${userId}`);
     }
@@ -69,14 +66,18 @@ export const paymentService = {
         method: data.method,
         notes: data.notes,
         metadata: data.metadata || {},
-        status: autoVerifiedStatus, // <--- Usamos el estado calculado (VERIFIED para puntos)
+        status: autoVerifiedStatus, // Usamos el estado calculado (VERIFIED para puntos)
+      },
+      // ✅ CORRECCIÓN 1: Incluir 'user' para poder acceder a sus datos (email, nombre) más abajo
+      include: {
+        user: true
       }
     });
 
     // --- 📧 NOTIFICACIÓN DE PAGO (Solo si está verificado) ---
     if (transaction.status === 'VERIFIED') {
       try {
-        if (transaction.user.email) {
+        if (transaction.user && transaction.user.email) {
           await emailService.sendPaymentReceipt(
             transaction.user.email,
             transaction.user.firstName,
@@ -88,18 +89,6 @@ export const paymentService = {
       } catch (error) {
         console.error("⚠️ Error enviando recibo de pago:", error);
       }
-    }
-
-    // Si se auto-verificó (Puntos), actualizamos la reserva a ACTIVE (o el estado que corresponda post-pago)
-    // Nota: Dependiendo de tu flujo, si paga al salir, la reserva ya estaría COMPLETED. 
-    // Si paga por adelantado, pasa a ACTIVE. 
-    // Por ahora, solo registramos el pago verificado.
-    //console.log('DEBUG PAYMENTS:');
-    //console.log('ID Usuario desde Token:', userId);
-    //console.log('ID Dueño de Reserva en BD:', reservation?.userId);
-
-    if (!reservation || reservation.userId !== userId) {
-        throw new Error('No tienes permiso para pagar esta reserva');
     }
 
     return transaction;
@@ -136,9 +125,6 @@ export const paymentService = {
       });
     }
     
-    // Si es REJECTED, la reserva se mantiene PENDING (esperando otro pago correcto)
-    // o se podría cancelar, pero mejor dejarla pendiente para dar oportunidad al usuario.
-
     return updatedTransaction;
   },
 
@@ -154,11 +140,17 @@ export const paymentService = {
   async getPendingTransactions(managerId: string) {
     // Aquí deberíamos filtrar por los parkings del manager, 
     // pero para el MVP asumimos que el manager ve todo o filtramos después.
-    // Una optimización sería buscar los parkings del manager primero.
     return await prisma.transaction.findMany({
       where: { status: 'PENDING' },
       include: { 
-        user: { select: { email: true, name: true } }, // Ver quién pagó
+        // ✅ CORRECCIÓN 2: Cambiado 'name' por 'firstName' y 'lastName' (UserSelect)
+        user: { 
+          select: { 
+            email: true, 
+            firstName: true, 
+            lastName: true 
+          } 
+        }, 
         reservation: true 
       },
       orderBy: { createdAt: 'desc' }

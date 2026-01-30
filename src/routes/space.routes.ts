@@ -14,6 +14,8 @@ export async function spaceRoutes(app: FastifyInstance) {
   app.post('/', { preHandler: authMiddleware }, spaceController.createSpace.bind(spaceController));
   app.post('/bulk', { preHandler: authMiddleware }, spaceController.createMultipleSpaces.bind(spaceController));
   app.put('/bulk-status', { preHandler: authMiddleware }, spaceController.bulkUpdateStatus.bind(spaceController));
-  app.put('/:id', { preHandler: authMiddleware }, spaceController.updateSpace.bind(spaceController));
-  app.delete('/:id', { preHandler: authMiddleware }, spaceController.deleteSpace.bind(spaceController));
+  //app.put('/:id', { preHandler: authMiddleware }, spaceController.updateSpace.bind(spaceController));
+  //app.delete('/:id', { preHandler: authMiddleware }, spaceController.deleteSpace.bind(spaceController));
+  app.put('/:id', { preHandler: authMiddleware }, (req: any, reply) => spaceController.updateSpace(req, reply));
+  app.delete('/:id', { preHandler: authMiddleware }, (req: any, reply) => spaceController.deleteSpace(req, reply));
 }

@@ -81,7 +81,7 @@ export class AuthController {
          await auditService.log({
           action: 'LOGIN_FAILED',
           resource: 'USER',
-          details: { email, error: error.message },
+          details: { email, error: (error as Error).message },
           ipAddress: ip,
           userAgent: userAgent,
         });
