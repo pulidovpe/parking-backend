@@ -78,6 +78,7 @@ jobs:
     name: Build & Push to AWS ECR
     needs: test
     runs-on: ubuntu-latest
+    environment: prod
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
 
     steps:
