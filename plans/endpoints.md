@@ -1,41 +1,83 @@
-# Documentación de Endpoints - Parking Backend
+# Documentación de Endpoints API - Parking Backend
 
-Esta es la lista detallada de los endpoints disponibles en la API. Todos los endpoints (excepto Auth público) requieren el header: `Authorization: Bearer <access_token>`.
+A continuación se listan todas las rutas disponibles en la API, organizadas por módulo.
 
-## 🔐 Autenticación y Seguridad
+**Base URL:** `/api`
 
-| Método | Endpoint | Descripción | Campos Requeridos (Body/Query) | Datos Devueltos |
-| :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/register` | Registro de usuario. | **Body:** `email`, `password`, `firstName`, `lastName`, `phone`, `role` | `{ success: true, message: "..." }` (Sin tokens, requiere verificar email) |
-| `POST` | `/api/auth/login` | Inicio de sesión. | **Body:** `email`, `password`, `twoFactorCode` (opcional si tiene 2FA) | `{ user, accessToken, refreshToken }` |
-| `POST` | `/api/auth/refresh` | Renovar sesión vencida. | **Body:** `refreshToken` | `{ accessToken, refreshToken }` (Nuevos) |
-| `GET` | `/api/auth/verify` | Validar email. | **Query:** `token` (del correo) | `{ success: true, message: "..." }` |
-| `POST` | `/api/auth/forgot-password` | Pedir recuperación. | **Body:** `email` | `{ message: "Si existe, enviamos correo..." }` |
-| `POST` | `/api/auth/reset-password` | Cambiar clave. | **Body:** `token` (8 chars), `newPassword` | `{ success: true, message: "..." }` |
-| `POST` | `/api/auth/2fa/setup` | Iniciar configuración 2FA. | **Header:** `Authorization` <br> **Body:** `{}` | `{ secret, qrCodeUrl }` |
-| `POST` | `/api/auth/2fa/enable` | Activar 2FA. | **Body:** `token` (Código de 6 dígitos) | `{ success: true, message: "2FA activado" }` |
+## 🔐 Autenticación (`/auth`)
+Gestión de usuarios y seguridad.
 
-## 🚗 Core (Parkings y Reservas)
+| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
+| :--- | :--- | :--- | :---: | :--- |
+| `POST` | `/register` | Registrar un nuevo usuario (Conductor o Manager). | ❌ | - |
+| `POST` | `/login` | Iniciar sesión y obtener Tokens (Access + Refresh). | ❌ | - |
+| `POST` | `/verify-email` | Verificar correo electrónico con token enviado. | ❌ | - |
+| `POST` | `/request-reset-password` | Solicitar correo de recuperación de contraseña. | ❌ | - |
+| `POST` | `/reset-password` | Establecer nueva contraseña usando el token de reset. | ❌ | - |
+| `POST` | `/refresh` | Obtener un nuevo Access Token usando un Refresh Token válido. | ❌ | - |
+| `POST` | `/logout` | Cerrar sesión (invalida el Refresh Token actual). | ✅ | Todos |
+| `POST` | `/2fa/setup` | Iniciar configuración de 2FA (Genera secreto y QR). | ✅ | Todos |
+| `POST` | `/2fa/verify` | Verificar código TOTP para activar 2FA en la cuenta. | ✅ | Todos |
+| `POST` | `/2fa/disable` | Desactivar la autenticación de dos factores. | ✅ | Todos |
 
-| Método | Endpoint | Descripción | Campos Requeridos (Body/Query) | Datos Devueltos |
-| :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/api/parkings/nearby` | Buscar por cercanía. | **Query:** `latitude`, `longitude`, `radius` (km, opcional) | `[ { id, name, distance, ... } ]` |
-| `GET` | `/api/spaces/parking/:id` | Ver mapa de espacios. | **Params:** `id` (parkingId) | `{ levels: [ { name, spaces: [] } ] }` |
-| `POST` | `/api/reservations` | Crear reserva. | **Body:** `parkingId`, `spaceId`, `startTime`, `estimatedEndTime` | `{ id, status: "PENDING", totalCost, ... }` |
-| `PATCH` | `/api/reservations/:id/activate` | Check-in (Entrada). | **Params:** `id` (reservationId) | `{ id, status: "ACTIVE", actualStartTime }` |
-| `GET` | `/api/reservations/my-history` | Historial usuario. | **Header:** `Authorization` | `[ { id, parkingName, status, cost } ]` |
+## 🅿️ Estacionamientos (`/parkings`)
+Gestión de sedes y locaciones.
 
-## 💸 Finanzas (Pagos y Puntos)
+| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
+| :--- | :--- | :--- | :---: | :--- |
+| `POST` | `/` | **Crear un nuevo estacionamiento.** | ✅ | Manager, Admin |
+| `GET` | `/` | Listar todos los estacionamientos (soporta filtros). | ❌ | - |
+| `GET` | `/nearby` | Buscar estacionamientos cercanos por latitud/longitud. | ❌ | - |
+| `GET` | `/:id` | Obtener detalles de un estacionamiento específico. | ❌ | - |
+| `PUT` | `/:id` | Actualizar datos de un estacionamiento. | ✅ | Manager (Dueño), Admin |
+| `DELETE` | `/:id` | Eliminar (o desactivar) un estacionamiento. | ✅ | Manager (Dueño), Admin |
 
-| Método | Endpoint | Descripción | Campos Requeridos (Body/Query) | Datos Devueltos |
-| :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/api/payments/report` | Reportar pago. | **Body:** `reservationId`, `amount`, `currency` (USD/VES), `referenceId`, `method` | `{ id, status: "PENDING", amountInUsd }` |
-| `PUT` | `/api/payments/:id/verify` | Validar pago (Manager). | **Params:** `id` (transactionId) | `{ id, status: "VERIFIED", verifiedBy }` |
-| `GET` | `/api/loyalty/me` | Ver perfil de lealtad. | **Header:** `Authorization` | `{ pointsBalance, tier, lifetimePoints }` |
+## 🚗 Espacios (`/spaces`)
+Gestión de plazas individuales dentro de un estacionamiento.
 
-## 📊 Analytics (Solo Managers)
+| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
+| :--- | :--- | :--- | :---: | :--- |
+| `POST` | `/` | Crear un nuevo espacio (slot) en un parking. | ✅ | Manager, Admin |
+| `GET` | `/:parkingId` | Listar todos los espacios de un estacionamiento. | ❌ | - |
+| `PUT` | `/:id` | Actualizar un espacio (ej: cambiar tipo, estado). | ✅ | Manager, Admin |
+| `DELETE` | `/:id` | Eliminar un espacio. | ✅ | Manager, Admin |
 
-| Método | Endpoint | Descripción | Campos Requeridos (Body/Query) | Datos Devueltos |
-| :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/api/analytics/dashboard` | KPIs del negocio. | **Header:** `Authorization` | `{ revenue: { daily, monthly }, occupancyRate, topUsers }` |
-| `GET` | `/api/analytics/export` | Exportar datos. | **Query:** `format=csv` | Archivo descargable `.csv` |
+## 📅 Reservas (`/reservations`)
+Flujo principal de reserva de espacios.
+
+| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
+| :--- | :--- | :--- | :---: | :--- |
+| `POST` | `/` | Crear una nueva reserva. | ✅ | Driver |
+| `GET` | `/my-history` | Obtener historial de reservas del usuario logueado. | ✅ | Driver |
+| `POST` | `/:id/cancel` | Cancelar una reserva activa. | ✅ | Driver (Dueño), Manager |
+| `GET` | `/:id/qrcode` | Obtener el código QR de acceso para una reserva. | ✅ | Driver (Dueño) |
+
+## 💰 Pagos (`/payments`)
+Gestión de transacciones financieras.
+
+| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
+| :--- | :--- | :--- | :---: | :--- |
+| `POST` | `/transaction` | Reportar un pago (Pago Móvil, Transferencia, Puntos). | ✅ | Driver |
+| `POST` | `/verify` | Verificar/Aprobar una transacción pendiente. | ✅ | Manager, Admin |
+| `GET` | `/history` | Ver historial de pagos realizados por el usuario. | ✅ | Driver |
+| `GET` | `/pending` | Listar pagos pendientes de verificación (Dashboard). | ✅ | Manager, Admin |
+| `GET` | `/reservation/:id` | Ver transacciones asociadas a una reserva específica. | ✅ | Driver, Manager |
+
+## 💎 Fidelidad (`/loyalty`)
+Sistema de puntos y recompensas.
+
+| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
+| :--- | :--- | :--- | :---: | :--- |
+| `GET` | `/profile` | Ver perfil de fidelidad (Balance de puntos, Nivel). | ✅ | Driver |
+| `GET` | `/history` | Ver historial de puntos ganados y gastados. | ✅ | Driver |
+| `POST` | `/convert` | Convertir puntos (ej: canjear por saldo). | ✅ | Driver |
+
+## 📊 Analíticas (`/analytics`)
+Reportes y estadísticas para gestión.
+
+| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
+| :--- | :--- | :--- | :---: | :--- |
+| `GET` | `/manager/dashboard` | KPIs generales (Reservas hoy, Ingresos hoy, Ocupación). | ✅ | Manager |
+| `GET` | `/manager/revenue` | Reporte detallado de ingresos y métodos de pago. | ✅ | Manager |
+| `GET` | `/manager/occupancy/:parkingId` | Estadísticas de ocupación por horas/días. | ✅ | Manager |
+| `GET` | `/admin/system-health` | Estado de salud del sistema y métricas técnicas. | ✅ | Admin |
