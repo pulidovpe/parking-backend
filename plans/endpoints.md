@@ -25,9 +25,9 @@ Gestión de sedes y locaciones.
 
 | Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
 | :--- | :--- | :--- | :---: | :--- |
-| `POST` | `/` | **Crear un nuevo estacionamiento.** | ✅ | Manager, Admin |
-| `GET` | `/` | Listar todos los estacionamientos (soporta filtros). | ❌ | - |
-| `GET` | `/nearby` | Buscar estacionamientos cercanos por latitud/longitud. | ❌ | - |
+| `GET` | `/search` | **Buscar estacionamientos cercanos** (params: `lat`, `lng`, `radiusKm`). | ❌ | - |
+| `GET` | `/` | Listar todos los estacionamientos gestionados (para Managers). | ✅ | Manager, Admin |
+| `POST` | `/` | Crear un nuevo estacionamiento. | ✅ | Manager, Admin |
 | `GET` | `/:id` | Obtener detalles de un estacionamiento específico. | ❌ | - |
 | `PUT` | `/:id` | Actualizar datos de un estacionamiento. | ✅ | Manager (Dueño), Admin |
 | `DELETE` | `/:id` | Eliminar (o desactivar) un estacionamiento. | ✅ | Manager (Dueño), Admin |
