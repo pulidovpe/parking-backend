@@ -70,8 +70,8 @@ export class ParkingController {
       // Validar datos de entrada
       const validatedData = updateParkingSchema.parse(request.body);
       
-      // Llamar al servicio (el servicio debe verificar si el usuario es dueño)
-      const updatedParking = await parkingService.update(id, validatedData, request.user.userId, request.user.role);
+      // ✅ CORREGIDO: Se eliminó el 4to argumento (request.user.role)
+      const updatedParking = await parkingService.update(id, validatedData, request.user.userId);
 
       return reply.code(200).send({
         success: true,
@@ -87,7 +87,9 @@ export class ParkingController {
   async delete(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
     try {
       const { id } = request.params;
-      await parkingService.delete(id, request.user.userId, request.user.role);
+      
+      // ✅ CORREGIDO: Se eliminó el 3er argumento (request.user.role)
+      await parkingService.delete(id, request.user.userId);
 
       return reply.code(200).send({
         success: true,
@@ -98,13 +100,13 @@ export class ParkingController {
     }
   }
 
-  // --- BUSCAR CERCANOS (MODIFICADO) ---
+  // --- BUSCAR CERCANOS ---
   async searchNearby(request: FastifyRequest, reply: FastifyReply) {
     try {
       // 1. Obtener query params
       const query = request.query as any;
 
-      // 🔄 CORRECCIÓN: Mapear lat/lng a latitude/longitude si vienen abreviados
+      // Mapear lat/lng a latitude/longitude si vienen abreviados
       const rawData = {
         ...query,
         latitude: query.latitude ?? query.lat,
@@ -112,8 +114,7 @@ export class ParkingController {
         radiusKm: query.radiusKm ?? query.radius // Soporte extra para 'radius'
       };
 
-      // 2. Revisar Caché (Usando las claves corregidas)
-      // Clave única basada en coordenadas redondeadas (para agrupar búsquedas muy cercanas)
+      // 2. Revisar Caché
       const latKey = Number(rawData.latitude).toFixed(3);
       const lngKey = Number(rawData.longitude).toFixed(3);
       const cacheKey = `parking:search:${latKey}:${lngKey}:${rawData.radiusKm}`;
@@ -127,7 +128,7 @@ export class ParkingController {
         });
       }
 
-      // 3. Validar con Zod (Ahora sí pasará porque rawData tiene latitude/longitude)
+      // 3. Validar con Zod
       const validatedData = searchParkingSchema.parse(rawData);
 
       // 4. Consultar Base de Datos
@@ -138,7 +139,7 @@ export class ParkingController {
         validatedData.limit
       );
 
-      // 5. Guardar en Redis (TTL: 5 minutos / 300 segundos)
+      // 5. Guardar en Redis (TTL: 5 minutos)
       await cacheService.set(cacheKey, results, 300);
 
       return reply.code(200).send({
@@ -173,12 +174,11 @@ export class ParkingController {
       });
     }
 
-    // Errores conocidos de negocio (que lanzas con throw new Error en el servicio)
     if (error instanceof Error) {
-        // Si el mensaje parece un error de cliente (400/403/404), ajusta el código
+        // Ajuste de códigos HTTP según el mensaje de error
         const status = error.message.includes('no encontrado') ? 404 
                      : error.message.includes('permiso') ? 403 
-                     : 400; // Por defecto 400 para errores de lógica
+                     : 400;
         
         return reply.code(status).send({ success: false, message: error.message });
     }
