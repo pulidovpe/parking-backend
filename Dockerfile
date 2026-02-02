@@ -7,16 +7,18 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Instalamos TODAS las dependencias (incluyendo devDependencies para compilar)
+# Instalamos TODAS las dependencias
 RUN npm ci
 
-# Generamos el cliente de Prisma
+# ⚠️ CLAVE: Generamos el cliente. 
+# Como schema.prisma ya tiene "linux-musl-openssl-3.0.x", 
+# esto descargará el motor correcto.
 RUN npx prisma generate
 
 # Copiamos el resto del código fuente
 COPY . .
 
-# Compilamos TypeScript a JavaScript (crea carpeta dist)
+# Compilamos
 RUN npm run build
 
 # --- ETAPA 2: PRODUCTION ---
@@ -26,17 +28,15 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copiamos solo los archivos necesarios desde la etapa builder
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# Instalamos SOLO dependencias de producción (más ligero)
+# Instalamos SOLO dependencias de producción
+# Y regeneramos el cliente para asegurar que los binarios estén ahí
 RUN npm ci --only=production && \
     npx prisma generate
 
-# Exponemos el puerto
 EXPOSE 3000
 
-# Comando de inicio
 CMD ["npm", "start"]
