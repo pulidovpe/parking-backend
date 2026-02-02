@@ -14,10 +14,15 @@ import { analyticsRoutes } from './routes/analytics.routes';
 import { cronService } from './services/cron.service';
 
 export async function buildApp() {
+  // Detectar si estamos en producción
+  const isProduction = process.env.NODE_ENV === 'production';
+
   const app = Fastify({
     logger: {
       level: 'info',
-      transport: {
+      // CONDICIONAL: Solo usar pino-pretty si NO estamos en producción.
+      // En producción, usamos el logger JSON por defecto (más rápido y seguro).
+      transport: isProduction ? undefined : {
         target: 'pino-pretty',
         options: {
           colorize: true,
@@ -28,7 +33,7 @@ export async function buildApp() {
     },
   });
 
-  // 1. REGISTRO DE JWT (Usando estructura: env.jwt.secret)
+  // 1. REGISTRO DE JWT
   await app.register(fjwt, {
     secret: env.jwt.secret,
     sign: {
@@ -43,8 +48,8 @@ export async function buildApp() {
 
   // Registrar Rate Limit (GLOBAL)
   await app.register(rateLimit, {
-    max: 100, // Máximo 100 peticiones
-    timeWindow: '1 minute', // Por cada 1 minuto
+    max: 100,
+    timeWindow: '1 minute',
     errorResponseBuilder: (request, context) => {
       return {
         statusCode: 429,
@@ -98,7 +103,7 @@ export async function buildApp() {
   // Loyalty routes
   await app.register(loyaltyRoutes, { prefix: '/api/loyalty' });
 
-  // Registrar (con prefijo)
+  // Registrar analytics
   await app.register(analyticsRoutes, { prefix: '/api/analytics' });
   
   return app;
