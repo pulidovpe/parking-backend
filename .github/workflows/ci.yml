@@ -5,10 +5,14 @@ on:
     branches: [ "main", "master", "develop" ]
     paths:
       - 'src/**'
+      - 'prisma/**'
+      - 'test/**'
   pull_request:
     branches: [ "main", "master" ]
     paths:
       - 'src/**'
+      - 'prisma/**'
+      - 'test/**'
   workflow_dispatch:
 
 permissions:
