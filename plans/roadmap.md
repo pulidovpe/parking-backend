@@ -87,12 +87,17 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [x] Tests de Autenticación (Registro, Login, Bloqueo).
   - [x] Tests de Reservas (Creación, Conflictos, Historial).
 
-## ✅ FASE 10: DevOps y Despliegue (EN PROGRESO)
+## ✅ FASE 10: DevOps y Despliegue (COMPLETADA)
 - [x] **1P: CI/CD (GitHub Actions):**
-  - [x] Pipeline de Integración Continua (Tests automatizados con Vitest).
-  - [x] Pipeline de Despliegue (Build Multi-Stage de Docker).
-  - [x] Integración con AWS ECR mediante OIDC (Seguridad sin llaves permanentes).
-- [ ] **1Q: Infraestructura Cloud (SIGUIENTE):**
-  - [ ] Configuración de Servidor (EC2 / ECS / App Runner).
-  - [ ] Despliegue de la aplicación desde ECR.
-  - [ ] Configuración de Dominio y SSL.
+  - [x] Pipeline de Integración Continua (Tests automatizados).
+  - [x] Pipeline de Despliegue (Build Docker + AWS ECR con OIDC).
+- [x] **1Q: Infraestructura Cloud (AWS):**
+  - [x] Provisionamiento de Servidor EC2 con Terraform.
+  - [x] Configuración de Docker Compose en Producción (App + PostGIS + Redis).
+  - [x] Despliegue exitoso y verificación de salud (`/health`).
+
+## 🚀 FASE 11: Seguridad y Acceso Público (SIGUIENTE)
+- [ ] **1R: Dominio y SSL:**
+  - [ ] Configurar Nginx como Reverse Proxy.
+  - [ ] Obtener certificados SSL gratuitos (Let's Encrypt / Certbot).
+  - [ ] Configurar dominio personalizado (si tienes uno) o usar DNS público.
