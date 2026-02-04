@@ -14,7 +14,7 @@
     "docker:logs": "docker-compose logs -f",
     "docker:reset": "docker-compose down -v && docker-compose up -d",
     "test": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui"    
   },
   "keywords": [],
   "author": "",
@@ -53,5 +53,8 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
+  },
+  "prisma": {
+    "seed": "npx ts-node --transpile-only prisma/seed.ts"
   }
 }
