@@ -1,41 +1,43 @@
+version: '3.8'
+
 services:
   app:
-    # ⚠️ REEMPLAZA <ACCOUNT_ID> CON TU ID REAL DE AWS (lo verás en el paso anterior)
-    image: $ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/parking-backend:latest
+    image: ${account_id}.dkr.ecr.${region}.amazonaws.com/parking-backend:latest
     restart: always
     command: ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
     ports:
-      - "80:3000" # Exponemos el puerto 3000 del contenedor al 80 del servidor (HTTP estándar)
+      - "80:3000"
     env_file:
       - .env
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
+        condition: service_started
 
   postgres:
     image: postgis/postgis:15-3.3-alpine
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: parking_user
+      POSTGRES_PASSWORD: SuperSecurePass2026!
+      POSTGRES_DB: parking_prod
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U parking_user -d SuperSecurePass2026!"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
-      image: redis:alpine
+    image: redis:alpine
     restart: always
     ports:
       - "6379:6379"
     volumes:
       - redis_data_prod:/data
+    # Usamos un healthcheck básico que funciona en la versión alpine
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
