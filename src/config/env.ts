@@ -12,7 +12,7 @@ const envSchema = z.object({
   REDIS_HOST: z.string().default('localhost'),
   REDIS_PORT: z.string().default('6379'),
   JWT_SECRET: z.string().min(1, "JWT_SECRET es requerida"),
-  JWT_EXPIRES_IN: z.string().default('15m'),
+  JWT_EXPIRES_IN: z.string().default('1h'),
   JWT_REFRESH_SECRET: z.string().min(1, "JWT_REFRESH_SECRET es requerida"),
   ENCRYPTION_KEY: z.string().min(1, "ENCRYPTION_KEY es requerida"),
 });

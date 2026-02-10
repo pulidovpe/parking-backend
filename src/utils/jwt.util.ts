@@ -1,7 +1,7 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { env } from '../config/env';
 
-export const generateToken = (payload: object, expiresIn: string = '15m'): string => {
+export const generateToken = (payload: object, expiresIn: string = '1h'): string => {
   // Aseguramos que el secret es string y las opciones coinciden
   return jwt.sign(payload, env.jwt.secret as string, { expiresIn } as SignOptions);
 };
