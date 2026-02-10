@@ -13,7 +13,7 @@ export class AuthService {
   
   // Helper privado para generar el par de tokens
   private generateTokens(user: { id: string; email: string; role: string }) {
-    // 1. Access Token (Corto plazo - 15m)
+    // 1. Access Token (Corto plazo - 2h)
     const accessToken = generateToken({ 
         userId: user.id, 
         email: user.email, 
