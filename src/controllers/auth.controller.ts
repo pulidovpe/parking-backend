@@ -59,16 +59,23 @@ export class AuthController {
         ipAddress: ip,
         userAgent: userAgent,
         // Guardamos el detalle
+        // details: { 
+        //   method: loginMethod,
+        //   twoFactorEnabled: result.user.twoFactorEnabled 
+        // },
         details: { 
-          method: loginMethod,
+          method: result.user.twoFactorEnabled ? '2fa' : 'password_only',
           twoFactorEnabled: result.user.twoFactorEnabled 
         }
       });
 
+      // ✅ CORREGIDO: Enviar tokens en el nivel superior
       return reply.code(200).send({
         success: true,
         message: 'Login exitoso',
-        data: result,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        user: result.user,
       });
     } catch (error) {
 
