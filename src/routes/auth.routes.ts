@@ -36,4 +36,5 @@ export async function authRoutes(app: FastifyInstance) {
   // Rutas protegidas para configurar 2FA
   app.post('/2fa/setup', { preHandler: authMiddleware }, authController.setupTwoFactor.bind(authController));
   app.post('/2fa/enable', { preHandler: authMiddleware }, authController.enableTwoFactor.bind(authController));
+  app.post('/2fa/disable', { preHandler: authMiddleware }, authController.disableTwoFactor.bind(authController));
 }

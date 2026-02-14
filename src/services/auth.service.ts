@@ -120,7 +120,7 @@ export class AuthService {
       secret: decryptedSecret, // Usamos la versión plana
       encoding: 'base32',
       token: token,
-      window: 1 // Permite un margen de error de +/- 30 segundos por si el reloj está desfasado
+      window: 6 // <-- ACTUALIZADO: Aumentamos la ventana aquí también por si acaso
     });
 
     if (!isValid) throw new Error('Código 2FA inválido');
@@ -134,8 +134,60 @@ export class AuthService {
     return true;
   }
 
-  // Login con Bloqueo y soporte de 2FA
-  async login(data: LoginInput & { twoFactorCode?: string }) { // Agregamos code opcional
+  // C. Desactivar 2FA (CON DEBUGGING Y MAYOR TOLERANCIA)
+  async disableTwoFactor(userId: string, token: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error('Usuario no encontrado');
+    if (!user.twoFactorEnabled) throw new Error('2FA no está activo');
+
+    // Validamos el código antes de desactivar por seguridad
+    if (user.twoFactorSecret) {
+      let decryptedSecret;
+      try {
+          decryptedSecret = encryptionUtil.decrypt(user.twoFactorSecret);
+      } catch (e) {
+          console.error("Error desencriptando secreto 2FA:", e);
+          throw new Error('Error de seguridad: Secreto corrupto');
+      }
+
+      const expectedToken = speakeasy.totp({
+        secret: decryptedSecret,
+        encoding: 'base32'
+      });
+      console.log(`🔐 DEBUG 2FA DISABLE:`);
+      console.log(`   - Usuario ID: ${userId}`);
+      console.log(`   - Código Recibido: ${token}`);
+      console.log(`   - Código Esperado (Server Time): ${expectedToken}`);
+      console.log(`   - Server Time: ${new Date().toISOString()}`);
+
+      const isValid = speakeasy.totp.verify({
+        secret: decryptedSecret,
+        encoding: 'base32',
+        token: token,
+        window: 6 // <-- Aumentado a 6
+      });
+
+      if (!isValid) {
+        console.error(`❌ Fallo validación 2FA. Recibido: ${token} vs Esperado: ${expectedToken}`);
+        throw new Error('Código 2FA inválido. No se puede desactivar.');
+      }
+    }
+
+    // Desactivar y limpiar secreto
+    await prisma.user.update({
+      where: { id: userId },
+      data: { 
+        twoFactorEnabled: false,
+        twoFactorSecret: null 
+      }
+    });
+
+    console.log(`✅ 2FA Desactivado correctamente para usuario ${userId}`);
+    return true;
+  }
+
+  // Login con Bloqueo y soporte de 2FA (MEJORADO CON HORA)
+  async login(data: LoginInput & { twoFactorCode?: string }) {
     const user = await prisma.user.findUnique({ where: { email: data.email } });
     
     if (!user) throw new Error('Credenciales inválidas');
@@ -149,7 +201,6 @@ export class AuthService {
     const isValidPassword = await comparePassword(data.password, user.password);
 
     if (!isValidPassword) {
-      // INCREMENTAR CONTADOR DE FALLOS
       await prisma.user.update({
         where: { id: user.id },
         data: { failedAttempts: { increment: 1 } }
@@ -170,7 +221,6 @@ export class AuthService {
       });
     }
 
-    // ... validaciones de estado (PENDING/ACTIVE) ...
     if (user.status === 'PENDING') throw new Error('Debes verificar tu correo.');
     if (user.status !== 'ACTIVE') throw new Error('Usuario inactivo.');
 
@@ -180,29 +230,37 @@ export class AuthService {
         throw new Error('Código 2FA requerido'); 
       }
 
-      // Desencriptar el secreto almacenado
       let decryptedSecret;
       try {
           decryptedSecret = encryptionUtil.decrypt(user.twoFactorSecret!);
       } catch (e) {
-          // Si falla al desencriptar, es un error crítico de datos
           throw new Error('Error interno de autenticación (Credencial corrupta)');
       }
 
-      // Validar código con speakeasy
+      // --- DEBUG LOGS LOGIN ---
+      const expectedToken = speakeasy.totp({
+        secret: decryptedSecret,
+        encoding: 'base32'
+      });
+      console.log(`🔑 DEBUG 2FA LOGIN:`);
+      console.log(`   - Usuario: ${user.email}`);
+      console.log(`   - Código Recibido: ${data.twoFactorCode}`);
+      console.log(`   - Código Esperado: ${expectedToken}`);
+      console.log(`   - Server Time: ${new Date().toISOString()}`); // <--- AÑADIDO PARA DIAGNÓSTICO
+      // ------------------------
+
       const isValid = speakeasy.totp.verify({ 
         secret: decryptedSecret,
         encoding: 'base32',
         token: data.twoFactorCode,
-        window: 1
+        window: 6 // Margen de ±3 minutos
       });
 
       if (!isValid) throw new Error('Código 2FA incorrecto');
     }
     
-    // Generar tokens
     const tokens = this.generateTokens(user);
-    const { password: _, twoFactorSecret: __, ...userClean } = user; // Quitamos secretos
+    const { password: _, twoFactorSecret: __, ...userClean } = user;
     return { user: userClean, ...tokens };
   }
 

@@ -6,15 +6,15 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
 Estas tareas son críticas para cerrar el ciclo de autenticación y seguridad.
 
 - [ ] **Implementar Endpoint `/auth/2fa/disable`**
-  - [ ] Crear método `disableTwoFactor` en `AuthService`.
-  - [ ] Validar que el usuario envíe su contraseña o un código 2FA válido para confirmar la desactivación (seguridad extra).
-  - [ ] Actualizar `AuthController` y `auth.routes.ts`.
+  - [x] Crear método `disableTwoFactor` en `AuthService`.
+  - [x] Validar que el usuario envíe su contraseña o un código 2FA válido para confirmar la desactivación (seguridad extra).
+  - [x] Actualizar `AuthController` y `auth.routes.ts`.
 - [ ] **Implementar Endpoint `/auth/logout`**
   - [ ] Crear mecanismo de lista negra (blacklist) para tokens o invalidación de refresh tokens en BD.
   - [ ] Limpiar cookies si se están usando.
 - [ ] **Implementar Endpoint `/auth/2fa/authenticate` (Opcional si se maneja en login)**
   - [ ] Decidir si el login maneja todo o si se requiere un paso 2 separado para clientes específicos.
-  
+
 
 ## ✅ Fase 1: Cimientos e Infraestructura
 - [x] **1A: Setup Base:** Node.js, TypeScript y Fastify configurados.
