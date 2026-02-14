@@ -1,83 +1,58 @@
-# Documentación de Endpoints API - Parking Backend
+# Documentación de Endpoints - Parking Backend
 
-A continuación se listan todas las rutas disponibles en la API, organizadas por módulo.
+**Estado Actual:**
+✅ [OK] = Implementado en código
+❌ [FALTA] = Pendiente de implementar (Ver Roadmap)
 
-**Base URL:** `/api`
+**URL Base:** `/api`
+**Autenticación:** Bearer Token (JWT)
 
-## 🔐 Autenticación (`/auth`)
-Gestión de usuarios y seguridad.
+## 🔐 Autenticación (AuthRoutes)
 
-| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
-| :--- | :--- | :--- | :---: | :--- |
-| `POST` | `/register` | Registrar un nuevo usuario (Conductor o Manager). | ❌ | - |
-| `POST` | `/login` | Iniciar sesión y obtener Tokens (Access + Refresh). | ❌ | - |
-| `POST` | `/verify-email` | Verificar correo electrónico con token enviado. | ❌ | - |
-| `POST` | `/request-reset-password` | Solicitar correo de recuperación de contraseña. | ❌ | - |
-| `POST` | `/reset-password` | Establecer nueva contraseña usando el token de reset. | ❌ | - |
-| `POST` | `/refresh` | Obtener un nuevo Access Token usando un Refresh Token válido. | ❌ | - |
-| `POST` | `/logout` | Cerrar sesión (invalida el Refresh Token actual). | ✅ | Todos |
-| `POST` | `/2fa/setup` | Iniciar configuración de 2FA (Genera secreto y QR). | ✅ | Todos |
-| `POST` | `/2fa/verify` | Verificar código TOTP para activar 2FA en la cuenta. | ✅ | Todos |
-| `POST` | `/2fa/disable` | Desactivar la autenticación de dos factores. | ✅ | Todos |
+| Estado | Método | Endpoint | Descripción | Datos (Body) | Resp. Exitosa | Auth |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| ✅ | `POST` | `/auth/register` | Registrar usuario | `{ email, password, firstName... }` | `{ user, tokens }` | No |
+| ✅ | `POST` | `/auth/login` | Login (Soporta 2FA) | `{ email, password }` | `{ user, tokens }` | No |
+| ✅ | `POST` | `/auth/refresh` | Refrescar token | `{ refreshToken }` | `{ accessToken }` | No |
+| ✅ | `GET` | `/auth/verify` | Verificar Email | Query: `?token=...` | `{ success: true }` | No |
+| ✅ | `GET` | `/auth/profile` | Perfil usuario | - | `{ user }` | Sí |
+| ✅ | `POST` | `/auth/forgot-password`| Pedir reset pass | `{ email }` | `{ success: true }` | No |
+| ✅ | `POST` | `/auth/reset-password` | Cambiar pass | `{ token, newPassword }` | `{ success: true }` | No |
+| ❌ | `POST` | `/auth/logout` | Cerrar sesión | - | `{ success: true }` | Sí |
 
-## 🅿️ Estacionamientos (`/parkings`)
-Gestión de sedes y locaciones.
+## 🛡️ 2FA (AuthRoutes)
 
-| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
-| :--- | :--- | :--- | :---: | :--- |
-| `GET` | `/search` | **Buscar estacionamientos cercanos** (params: `lat`, `lng`, `radiusKm`). | ❌ | - |
-| `GET` | `/` | Listar todos los estacionamientos gestionados (para Managers). | ✅ | Manager, Admin |
-| `POST` | `/` | Crear un nuevo estacionamiento. | ✅ | Manager, Admin |
-| `GET` | `/:id` | Obtener detalles de un estacionamiento específico. | ❌ | - |
-| `PUT` | `/:id` | Actualizar datos de un estacionamiento. | ✅ | Manager (Dueño), Admin |
-| `DELETE` | `/:id` | Eliminar (o desactivar) un estacionamiento. | ✅ | Manager (Dueño), Admin |
+| Estado | Método | Endpoint | Descripción | Datos (Body) | Resp. Exitosa | Auth |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| ✅ | `POST` | `/auth/2fa/setup` | Generar secreto/QR | - | `{ qrCode, secret }`| Sí |
+| ✅ | `POST` | `/auth/2fa/enable` | Activar tras escanear| `{ token }` | `{ enabled: true }` | Sí |
+| ❌ | `POST` | `/auth/2fa/disable` | Desactivar 2FA | `{ token, password }`| `{ enabled: false }`| Sí |
+| ❌ | `POST` | `/auth/2fa/authenticate`| Validar solo código | `{ email, token }` | `{ tokens }` | No |
 
-## 🚗 Espacios (`/spaces`)
-Gestión de plazas individuales dentro de un estacionamiento.
+## 🅿️ Estacionamientos (ParkingRoutes)
 
-| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
-| :--- | :--- | :--- | :---: | :--- |
-| `POST` | `/` | Crear un nuevo espacio (slot) en un parking. | ✅ | Manager, Admin |
-| `GET` | `/:parkingId` | Listar todos los espacios de un estacionamiento. | ❌ | - |
-| `PUT` | `/:id` | Actualizar un espacio (ej: cambiar tipo, estado). | ✅ | Manager, Admin |
-| `DELETE` | `/:id` | Eliminar un espacio. | ✅ | Manager, Admin |
+| Estado | Método | Endpoint | Descripción | Datos (Body) | Auth |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| ✅ | `POST` | `/parkings` | Crear parking | `{ name, lat, lng... }` | Manager |
+| ✅ | `GET` | `/parkings` | Listar propios | - | Manager |
+| ✅ | `GET` | `/parkings/search` | Buscar cercanos | Query: `lat, lng, radius` | Todos |
+| ✅ | `GET` | `/parkings/:id` | Ver detalle | - | Todos |
+| ✅ | `PATCH` | `/parkings/:id` | Editar | `{ name, status... }` | Manager |
+| ✅ | `DELETE` | `/parkings/:id` | Eliminar | - | Manager |
 
-## 📅 Reservas (`/reservations`)
-Flujo principal de reserva de espacios.
+## 🚗 Espacios (SpaceRoutes)
 
-| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
-| :--- | :--- | :--- | :---: | :--- |
-| `POST` | `/` | Crear una nueva reserva. | ✅ | Driver |
-| `GET` | `/my-history` | Obtener historial de reservas del usuario logueado. | ✅ | Driver |
-| `POST` | `/:id/cancel` | Cancelar una reserva activa. | ✅ | Driver (Dueño), Manager |
-| `GET` | `/:id/qrcode` | Obtener el código QR de acceso para una reserva. | ✅ | Driver (Dueño) |
+| Estado | Método | Endpoint | Descripción | Datos (Body) | Auth |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| ✅ | `POST` | `/spaces` | Crear espacios | `{ parkingId, quantity... }`| Manager |
+| ✅ | `GET` | `/spaces/:id` | Ver espacio | - | Todos |
+| ✅ | `PATCH` | `/spaces/:id` | Actualizar estado | `{ status }` | Manager |
+| ✅ | `DELETE` | `/spaces/:id` | Eliminar | - | Manager |
 
-## 💰 Pagos (`/payments`)
-Gestión de transacciones financieras.
+## 📅 Reservas (ReservationRoutes)
 
-| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
-| :--- | :--- | :--- | :---: | :--- |
-| `POST` | `/transaction` | Reportar un pago (Pago Móvil, Transferencia, Puntos). | ✅ | Driver |
-| `POST` | `/verify` | Verificar/Aprobar una transacción pendiente. | ✅ | Manager, Admin |
-| `GET` | `/history` | Ver historial de pagos realizados por el usuario. | ✅ | Driver |
-| `GET` | `/pending` | Listar pagos pendientes de verificación (Dashboard). | ✅ | Manager, Admin |
-| `GET` | `/reservation/:id` | Ver transacciones asociadas a una reserva específica. | ✅ | Driver, Manager |
-
-## 💎 Fidelidad (`/loyalty`)
-Sistema de puntos y recompensas.
-
-| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
-| :--- | :--- | :--- | :---: | :--- |
-| `GET` | `/profile` | Ver perfil de fidelidad (Balance de puntos, Nivel). | ✅ | Driver |
-| `GET` | `/history` | Ver historial de puntos ganados y gastados. | ✅ | Driver |
-| `POST` | `/convert` | Convertir puntos (ej: canjear por saldo). | ✅ | Driver |
-
-## 📊 Analíticas (`/analytics`)
-Reportes y estadísticas para gestión.
-
-| Método | Ruta | Descripción | Auth Requerida | Roles Permitidos |
-| :--- | :--- | :--- | :---: | :--- |
-| `GET` | `/manager/dashboard` | KPIs generales (Reservas hoy, Ingresos hoy, Ocupación). | ✅ | Manager |
-| `GET` | `/manager/revenue` | Reporte detallado de ingresos y métodos de pago. | ✅ | Manager |
-| `GET` | `/manager/occupancy/:parkingId` | Estadísticas de ocupación por horas/días. | ✅ | Manager |
-| `GET` | `/admin/system-health` | Estado de salud del sistema y métricas técnicas. | ✅ | Admin |
+| Estado | Método | Endpoint | Descripción | Datos (Body) | Auth |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| ✅ | `POST` | `/reservations` | Crear reserva | `{ spaceId, startTime... }` | Driver |
+| ✅ | `GET` | `/reservations` | Mis reservas | - | Driver |
+| ✅ | `PATCH` | `/reservations/:id/cancel`| Cancelar | `{ reason }` | Driver |
