@@ -2,20 +2,6 @@
 
 Este documento detalla las fases de desarrollo del proyecto, integrando el progreso actual y los próximos pasos.
 
-## 🚨 Prioridad Inmediata: Completar Seguridad (Auth)
-Estas tareas son críticas para cerrar el ciclo de autenticación y seguridad.
-
-- [ ] **Implementar Endpoint `/auth/2fa/disable`**
-  - [x] Crear método `disableTwoFactor` en `AuthService`.
-  - [x] Validar que el usuario envíe su contraseña o un código 2FA válido para confirmar la desactivación (seguridad extra).
-  - [x] Actualizar `AuthController` y `auth.routes.ts`.
-- [ ] **Implementar Endpoint `/auth/logout`**
-  - [ ] Crear mecanismo de lista negra (blacklist) para tokens o invalidación de refresh tokens en BD.
-  - [ ] Limpiar cookies si se están usando.
-- [ ] **Implementar Endpoint `/auth/2fa/authenticate` (Opcional si se maneja en login)**
-  - [ ] Decidir si el login maneja todo o si se requiere un paso 2 separado para clientes específicos.
-
-
 ## ✅ Fase 1: Cimientos e Infraestructura
 - [x] **1A: Setup Base:** Node.js, TypeScript y Fastify configurados.
 - [x] **1B: Infraestructura:** Docker Compose con PostgreSQL, Redis y pgAdmin.
@@ -34,7 +20,7 @@ Estas tareas son críticas para cerrar el ciclo de autenticación y seguridad.
   - [x] Lógica de creación y cancelación de reservas.
   - [x] Validación automática de disponibilidad en tiempo real por rango de tiempo.
   - [x] Historial de reservas por usuario. (`GET /my-history`)
-  - [x] Sistema de notificaciones básicas. (Implementado en FASE 1K)
+  - [x] Sistema de notificaciones básicas.
 
 ## 💰 Fase 3: Sistema de Pagos
 - [x] **1H: Pagos (Enfoque Local):** Reporte de pago móvil, verificación manual y soporte multivaluta (USD/VES).
@@ -52,66 +38,81 @@ Estas tareas son críticas para cerrar el ciclo de autenticación y seguridad.
   - [x] Descuentos progresivos por nivel.
   - [x] Canje de puntos por beneficios (Pagar reserva con puntos).
   - [x] Historial de puntos (Endpoint /loyalty/me).
-  - [x] Notificaciones de logros (Console logs implementados).
+  - [x] Notificaciones de logros.
 
 ## 📊 Fases 5: Analytics y Reportes
 - [ ] **1J: Dashboard para managers con métricas:** Métricas de ocupación, ingresos, usuarios frecuentes y exportación CSV.
-  - [x] Estadísticas de ocupación por día/semana/mes (Cubierto por `getOccupancyHeatmap` y KPIs).
-  - [x] Ingresos totales y proyecciones (Ingresos listos en `getRevenueChart`; Proyecciones movidas a fases futuras de IA).
-  - [x] Usuarios más frecuentes (Cubierto por `getTopUsers`).
-  - [x] Horarios pico y valle (Cubierto por `getOccupancyHeatmap`).
-  - [x] Reportes exportables (PDF/CSV/Excel) (Cubierto por endpoint `/export` en CSV).
-  - [x] Gráficas de tendencias (Cubierto por `getRevenueChart`).
-  - [ ] Comparación entre parkings (Pendiente menor, el dashboard actual agrupa todo).
+  - [x] Estadísticas de ocupación por día/semana/mes.
+  - [x] Ingresos totales y proyecciones.
+  - [x] Usuarios más frecuentes.
+  - [x] Horarios pico y valle.
+  - [x] Reportes exportables (CSV).
+  - [x] Gráficas de tendencias.
+  - [ ] Comparación entre parkings.
 
-## 🔔 FASE 6: Notificaciones Avanzadas
-- [ ] **1K:Sistema de alertas por email/SMS:** Emails transaccionales, recordatorios y alertas de vencimiento.
+## 🔔 FASE 6: Notificaciones Avanzadas (COMPLETADA) ✅
+- [x] **1K:Sistema de alertas por email:** Emails transaccionales, recordatorios y alertas de vencimiento.
   - [x] Configuración de Nodemailer / Mailtrap (Ethereal).
   - [x] Emails transaccionales (Bienvenida).
   - [x] Confirmación de reserva.
   - [x] Notificación de pago recibido.
-  - [x] Recordatorio 30 min antes (Depende de Fase 1L: Cron Jobs).
-  - [x] Alerta de tiempo próximo a vencer (Depende de Fase 1L: Cron Jobs).
-  - [x] Plantillas de notificaciones (El HTML actual ya cumple esta función).
-  - [ ] SMS para eventos críticos (POSTERGADO a migración AWS).
+  - [x] Recordatorio 30 min antes (Cron Job activo).
+  - [x] Alerta de tiempo próximo a vencer (Cron Job activo).
+  - [x] Plantillas de notificaciones HTML.
 
-## ⏰ FASE 7: Sistema de Expiración Automática
-- [ ] **1L: Automatización de estados:** Limpieza automática de reservas pendientes y expiradas.
+## ⏰ FASE 7: Sistema de Expiración Automática (COMPLETADA) ✅
+- [x] **1L: Automatización de estados:** Limpieza automática de reservas pendientes y expiradas.
   - [x] Job scheduler (cron) configurado y corriendo.
-  - [x] Expirar reservas PENDING no activadas (Limpieza automática).
+  - [x] Expirar reservas PENDING no activadas (Limpieza automática basada en `startTime`).
   - [x] Liberar espacios automáticamente.
 
 ## 🔒 FASE 8: Seguridad Avanzada (COMPLETADA) ✅
 - [x] **1M: Blindaje de la API:**
-  - [x] **Rate limiting:** Protección contra ataques de fuerza bruta y DDoS.
+  - [x] **Rate limiting:** Protección contra ataques de fuerza bruta.
   - [x] **Refresh Tokens:** Rotación de sesiones seguras.
-  - [x] **Verificación de Identidad:** Email obligatorio para activar cuenta.
-  - [x] **Recuperación de Cuenta:** Flujo seguro de reset password con tokens cortos.
-  - [x] **Bloqueo Inteligente:** Suspensión temporal tras 3 intentos fallidos.
-  - [x] **2FA (MFA):** Integración con Google Authenticator (TOTP).
-  - [x] **Auditoría Forense:** Logs inmutables de acciones críticas en BD.
-  - [x] **Encriptación:** Cifrado AES-256 para secretos en reposo.
+  - [x] **Verificación de Identidad:** Email obligatorio.
+  - [x] **Recuperación de Cuenta:** Reset password seguro.
+  - [x] **Bloqueo Inteligente:** Suspensión tras 3 intentos fallidos.
+  - [x] **2FA (MFA):** Integración TOTP (Setup, Enable, Disable).
+  - [x] **Logout Seguro:** Revocación de tokens (Blacklist en Redis).
+  - [x] **Auditoría Forense:** Logs inmutables de acciones críticas.
 
 ## ⚡ FASE 9: Optimización y Escala
 - [x] **1N: Rendimiento:**
-  - [x] Implementación de Cache con Redis para rutas de lectura frecuente.
-  - [x] Optimización de consultas SQL/Prisma (Cubierto con índices en Schema y Redis).
+  - [x] Implementación de Cache con Redis.
+  - [x] Optimización de consultas SQL/Prisma.
 - [x] **1O: Calidad:**
   - [x] Configuración de Vitest + Supertest.
-  - [x] Tests de Autenticación (Registro, Login, Bloqueo).
-  - [x] Tests de Reservas (Creación, Conflictos, Historial).
+  - [x] Tests de Autenticación.
+  - [x] Tests de Reservas.
 
 ## ✅ FASE 10: DevOps y Despliegue (COMPLETADA)
 - [x] **1P: CI/CD (GitHub Actions):**
-  - [x] Pipeline de Integración Continua (Tests automatizados).
-  - [x] Pipeline de Despliegue (Build Docker + AWS ECR con OIDC).
+  - [x] Pipeline de Integración Continua.
+  - [x] Pipeline de Despliegue (Docker + AWS).
 - [x] **1Q: Infraestructura Cloud (AWS):**
-  - [x] Provisionamiento de Servidor EC2 con Terraform.
-  - [x] Configuración de Docker Compose en Producción (App + PostGIS + Redis).
-  - [x] Despliegue exitoso y verificación de salud (`/health`).
+  - [x] Provisionamiento EC2 + Terraform.
+  - [x] Docker Compose Producción.
+  - [x] Verificación de salud (`/health`).
 
 ## 🚀 FASE 11: Seguridad y Acceso Público (SIGUIENTE)
 - [ ] **1R: Dominio y SSL:**
   - [ ] Configurar Nginx como Reverse Proxy.
-  - [ ] Obtener certificados SSL gratuitos (Let's Encrypt / Certbot).
-  - [ ] Configurar dominio personalizado (si tienes uno) o usar DNS público.
+  - [ ] Obtener certificados SSL gratuitos.
+  - [ ] Configurar dominio personalizado.
+
+## 👮‍♂️ FASE 12: Administración y Control (NUEVO)
+*Funcionalidades exclusivas para Managers y Admins para gestión operativa.*
+
+- [ ] **1S: Gestión de Usuarios (Admin):**
+  - [ ] Endpoint para listar usuarios con paginación (`GET /admin/users`).
+  - [ ] Endpoint para bloquear/desbloquear usuarios (`PATCH /admin/users/:id/status`).
+  - [ ] Endpoint para cambiar roles (Promover a Manager).
+
+- [ ] **1T: Auditoría Visual (Admin):**
+  - [ ] Endpoint para consultar logs de auditoría (`GET /admin/audit-logs`).
+  - [ ] Filtros por fecha, usuario y tipo de acción.
+
+- [ ] **1U: Operaciones de Campo (Manager):**
+  - [ ] Reserva manual ("Walk-in") para clientes sin app.
+  - [ ] Bloqueo de mantenimiento para espacios específicos.
