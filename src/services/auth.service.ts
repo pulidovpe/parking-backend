@@ -8,6 +8,7 @@ import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
 import { env } from '../config/env';
 import { encryptionUtil } from '../utils/encryption.util';
+import { cacheService } from './cache.service';
 
 export class AuthService {
   
@@ -74,6 +75,36 @@ export class AuthService {
     });
 
     return true;
+  }
+
+  // [NUEVO] LOGOUT SEGURO
+  async logout(token: string) {
+    try {
+      // 1. Decodificar el token sin verificar firma (ya pasó middleware) para ver expiración
+      const decoded: any = jwt.decode(token);
+      
+      if (!decoded || !decoded.exp) {
+        // Si no se puede leer, igual retornamos éxito por seguridad
+        return true; 
+      }
+
+      // 2. Calcular tiempo restante de vida (TTL)
+      const expirationTime = decoded.exp * 1000; // a ms
+      const currentTime = Date.now();
+      const ttl = Math.floor((expirationTime - currentTime) / 1000); // a segundos
+
+      if (ttl > 0) {
+        // 3. Agregar a Lista Negra en Redis
+        // Clave: blacklist:<token>, Valor: 'true', Expiración: ttl
+        await cacheService.set(`blacklist:${token}`, 'true', ttl);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error en logout:', error);
+      // No lanzamos error al usuario, el logout debe ser "best effort"
+      return true;
+    }
   }
 
   // A. Configurar 2FA (Generar secreto y QR)

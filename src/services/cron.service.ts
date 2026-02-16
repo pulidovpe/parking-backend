@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import prisma from '../config/database';
 import { emailService } from './email.service';
-import { cacheService } from './cache.service'; // ✅ IMPORTADO
+import { cacheService } from './cache.service';
 
 export const cronService = {
   
@@ -24,44 +24,51 @@ export const cronService = {
   },
 
   // Lógica A: Expirar reservas viejas (No-Show)
+  // CORRECCIÓN: Ahora validamos contra 'startTime' para no borrar reservas futuras
   async expirePendingReservations() {
-    const EXPIRATION_MINUTES = 15; // 15 minutos de tolerancia para llegar
+    const GRACE_PERIOD_MINUTES = 15; // 15 minutos de tolerancia después de la hora de inicio
     
-    const timeLimit = new Date();
-    timeLimit.setMinutes(timeLimit.getMinutes() - EXPIRATION_MINUTES);
+    const now = new Date();
+    // Calculamos el tiempo límite: Si la reserva empezó antes de (Ahora - 15min), es No-Show.
+    const cutoffTime = new Date(now.getTime() - GRACE_PERIOD_MINUTES * 60000);
 
-    // Buscar reservas PENDING viejas
+    // Buscar reservas PENDING cuya HORA DE INICIO ya pasó el tiempo de tolerancia
     const expiredReservations = await prisma.reservation.findMany({
       where: {
         status: 'PENDING',
-        createdAt: { lte: timeLimit }
+        startTime: { lte: cutoffTime } // ✅ USAMOS startTime, NO createdAt
       },
       include: { space: true } // Traemos espacio para saber el parkingId
     });
 
     if (expiredReservations.length > 0) {
-      console.log(`🧹 Limpiando ${expiredReservations.length} reservas abandonadas...`);
+      console.log(`🧹 Limpiando ${expiredReservations.length} reservas por No-Show...`);
       
       for (const res of expiredReservations) {
-        // Transacción: Cancelar y Liberar Espacio
-        await prisma.$transaction([
-          prisma.reservation.update({
-            where: { id: res.id },
-            data: { 
-              status: 'CANCELLED',
-              cancellationReason: 'Expiración automática (No-Show)'
-            }
-          }),
-          prisma.parkingSpace.update({
-            where: { id: res.spaceId },
-            data: { status: 'AVAILABLE' }
-          })
-        ]);
-        console.log(`🗑️ Reserva ${res.id} cancelada automáticamente.`);
+        try {
+          // Transacción: Cancelar y Liberar Espacio
+          await prisma.$transaction([
+            prisma.reservation.update({
+              where: { id: res.id },
+              data: { 
+                status: 'CANCELLED',
+                cancellationReason: 'Sistema: No-Show (Tiempo de espera excedido)'
+              }
+            }),
+            prisma.parkingSpace.update({
+              where: { id: res.spaceId },
+              data: { status: 'AVAILABLE' }
+            })
+          ]);
 
-        // 💥 REDIS: Invalidar caché para reflejar disponibilidad
-        if (res.parkingId) {
-            await cacheService.del(`spaces:availability:${res.parkingId}`);
+          console.log(`🗑️ Reserva ${res.id} cancelada por inasistencia.`);
+
+          // 💥 REDIS: Invalidar caché para reflejar disponibilidad
+          if (res.parkingId) {
+              await cacheService.del(`spaces:availability:${res.parkingId}`);
+          }
+        } catch (error) {
+          console.error(`❌ Error procesando expiración de reserva ${res.id}`, error);
         }
       }
     }
@@ -145,7 +152,7 @@ export const cronService = {
       console.log(`⏳ Enviando ${activeReservations.length} alertas de vencimiento...`);
       
       for (const res of activeReservations) {
-        if (res.user.email && res.estimatedEndTime) { // estimatedEndTime puede ser null en prisma schema, pero en lógica siempre lo seteamos
+        if (res.user.email && res.estimatedEndTime) { 
           try {
             await emailService.sendExpirationWarning(
               res.user.email,

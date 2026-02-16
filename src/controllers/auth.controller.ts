@@ -216,6 +216,25 @@ export class AuthController {
     }
   }
 
+  // [NUEVO] LOGOUT ENDPOINT
+  async logout(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const authHeader = request.headers.authorization;
+      if (authHeader) {
+        const token = authHeader.split(' ')[1];
+        await authService.logout(token);
+      }
+      
+      // Opcional: Limpiar cookies si las usaras
+      // reply.clearCookie('token');
+
+      return reply.send({ success: true, message: 'Sesión cerrada correctamente' });
+    } catch (error) {
+      // Incluso si falla algo interno, al usuario le decimos que salió
+      return reply.send({ success: true, message: 'Sesión cerrada' });
+    }
+  }
+
   // Helper de errores
   private handleError(error: unknown, reply: FastifyReply) {
     console.error('Auth Error:', error);

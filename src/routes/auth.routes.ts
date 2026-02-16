@@ -5,16 +5,17 @@ import { authMiddleware } from '../middlewares/auth.middleware';
 const authController = new AuthController();
 
 export async function authRoutes(app: FastifyInstance) {
+  // Públicas
   app.post('/register', authController.register.bind(authController));
   app.post('/login', authController.login.bind(authController));
-  
-  // RUTA DE REFRESCO
   app.post('/refresh', authController.refresh.bind(authController));
-
-  // RUTA GET (El link del correo apunta aquí)
   app.get('/verify', authController.verifyEmail.bind(authController));
+  // RUTAS DE RECUPERACIÓN DE CONTRASEÑA
+  app.post('/forgot-password', authController.forgotPassword.bind(authController));
+  app.post('/reset-password', authController.resetPassword.bind(authController));
 
-  // Ruta protegida de ejemplo
+  // Protegidas
+  app.post('/logout', { preHandler: authMiddleware }, authController.logout.bind(authController));
   app.get(
     '/profile',
     { preHandler: authMiddleware },
@@ -29,11 +30,7 @@ export async function authRoutes(app: FastifyInstance) {
     }
   );
 
-  // RUTAS DE RECUPERACIÓN
-  app.post('/forgot-password', authController.forgotPassword.bind(authController));
-  app.post('/reset-password', authController.resetPassword.bind(authController));
-
-  // Rutas protegidas para configurar 2FA
+  // 2FA
   app.post('/2fa/setup', { preHandler: authMiddleware }, authController.setupTwoFactor.bind(authController));
   app.post('/2fa/enable', { preHandler: authMiddleware }, authController.enableTwoFactor.bind(authController));
   app.post('/2fa/disable', { preHandler: authMiddleware }, authController.disableTwoFactor.bind(authController));
