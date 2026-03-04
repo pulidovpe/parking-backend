@@ -41,9 +41,19 @@ export async function buildApp() {
     },
   });
 
-  // CORS
+  // CORS - Configuración mejorada
   await app.register(cors, {
-    origin: true,
+    origin: isProduction 
+      ? [
+          // Agregar aquí los dominios permitidos en producción
+          'https://tu-dominio.com',
+          'https://www.tu-dominio.com',
+        ]
+      : true,  // En desarrollo, permite cualquier origen
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    maxAge: 86400, // Cache preflight por 24 horas
   });
 
   // Registrar Rate Limit (GLOBAL)
