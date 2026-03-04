@@ -14,7 +14,8 @@
     "docker:logs": "docker-compose logs -f",
     "docker:reset": "docker-compose down -v && docker-compose up -d",
     "test": "vitest",
-    "test:ui": "vitest --ui"    
+    "test:ui": "vitest --ui",
+    "db:clean": "docker exec -it parking_postgres psql -U parking_user -d parking_db -c 'TRUNCATE TABLE \"Transaction\", \"reservations\" RESTART IDENTITY CASCADE;'"
   },
   "keywords": [],
   "author": "",
