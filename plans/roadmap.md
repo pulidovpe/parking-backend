@@ -30,6 +30,13 @@ Este documento detalla las fases de desarrollo del proyecto, integrando el progr
   - [x] Flujo de Verificación (Manager aprueba -> Reserva se activa).
   - [x] Historial de Transacciones (Usuario).
   - [x] Métricas Financieras (Manager).
+- [x] 1H.1: Sincronización de Conciliación (NUEVO): Persistencia de datos del emisor para evitar pérdida de información del Frontend.
+  - [x] Schema Update (prisma/schema.prisma): Adición de campos senderBank, senderPhone y senderEmail.
+  - [x] DTO Update (payment.types.ts): Inclusión de campos opcionales para datos de emisor.
+  - [x] Validation (payment.schema.ts): Esquema Zod para validar senderBank, senderPhone y senderEmail.
+  - [x] Service Logic (payment.service.ts): Mapeo de nuevos campos y persistencia del campo metadata (JSON) para capturas de pantalla.
+  - [x] Controller Update (payment.controller.ts): Ajuste en la captura del body y extracción robusta de IDs de usuario.
+  
 
 ## 🎁 Fase 4: Fidelización y Gamificación
 - [x] **1I: Sistema de Puntos:** Membresías (Bronce/Plata/Oro), acumulación y canje de puntos.

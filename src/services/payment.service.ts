@@ -10,7 +10,7 @@ export const paymentService = {
     // Verificar que la reserva existe y pertenece al usuario
     const reservation = await prisma.reservation.findUnique({
       where: { id: data.reservationId },
-      include: { parking: true } // Para verificar montos si fuera necesario
+      include: { parking: true }
     });
 
     if (!reservation) {
@@ -22,7 +22,6 @@ export const paymentService = {
     }
 
     // Calcular el monto en USD para reportes internos
-    // Si paga en VES, dividimos entre tasa. Si es USD, es igual.
     const amountInUsd = data.currency === 'VES' 
       ? data.amount / data.exchangeRate 
       : data.amount;
@@ -34,26 +33,22 @@ export const paymentService = {
       const POINTS_EXCHANGE_RATE = 10; // 10 Puntos = 1 USD
       const pointsNeeded = Math.ceil(amountInUsd * POINTS_EXCHANGE_RATE);
 
-      // 1. Verificar saldo
       const profile = await loyaltyService.getProfile(userId);
       if (profile.pointsBalance < pointsNeeded) {
         throw new Error(`Saldo insuficiente. Necesitas ${pointsNeeded} puntos (Tienes ${profile.pointsBalance})`);
       }
 
-      // 2. Descontar puntos (Esto genera un log negativo en LoyaltyLog)
       await loyaltyService.addPoints(
         userId,
-        -pointsNeeded, // Negativo para restar
+        -pointsNeeded,
         PointSource.REDEMPTION,
         `Pago de reserva ${data.reservationId}`
       );
 
-      // 3. Marcar como VERIFIED automáticamente (ya cobramos)
       autoVerifiedStatus = 'VERIFIED';
-      console.log(`💎 Pago con puntos exitoso: -${pointsNeeded} pts`);
     }
     
-    // Crear la transacción
+    // Crear la transacción con los nuevos campos de conciliación
     const transaction = await prisma.transaction.create({
       data: {
         userId,
@@ -65,10 +60,14 @@ export const paymentService = {
         referenceId: data.referenceId,
         method: data.method,
         notes: data.notes,
-        metadata: data.metadata || {},
-        status: autoVerifiedStatus, // Usamos el estado calculado (VERIFIED para puntos)
+        // ✅ NUEVOS CAMPOS DE CONCILIACIÓN
+        senderBank: data.senderBank,
+        senderPhone: data.senderPhone,
+        senderEmail: data.senderEmail,
+        // El frontend ya envía la URL de la imagen dentro de metadata
+        metadata: data.metadata || {}, 
+        status: autoVerifiedStatus,
       },
-      // ✅ CORRECCIÓN 1: Incluir 'user' para poder acceder a sus datos (email, nombre) más abajo
       include: {
         user: true
       }
@@ -96,7 +95,6 @@ export const paymentService = {
 
   // 2. Manager verifica (Aprueba o Rechaza)
   async verifyTransaction(data: VerifyTransactionDTO) {
-    // Buscar transacción
     const transaction = await prisma.transaction.findUnique({
       where: { id: data.transactionId },
       include: { reservation: true }
@@ -104,7 +102,6 @@ export const paymentService = {
 
     if (!transaction) throw new Error('Transacción no encontrada');
 
-    // Actualizar estado de la transacción
     const updatedTransaction = await prisma.transaction.update({
       where: { id: data.transactionId },
       data: {
@@ -114,13 +111,11 @@ export const paymentService = {
       }
     });
 
-    // LÓGICA DE NEGOCIO CRÍTICA:
-    // Si el pago es VERIFIED, confirmamos la reserva automáticamente.
     if (data.status === 'VERIFIED') {
       await prisma.reservation.update({
         where: { id: transaction.reservationId },
         data: {
-          status: ReservationStatus.ACTIVE // La reserva ya está pagada y lista para usarse
+          status: ReservationStatus.ACTIVE
         }
       });
     }
@@ -136,14 +131,11 @@ export const paymentService = {
     });
   },
 
-  // 4. Obtener pagos pendientes (Para el Dashboard del Manager)
+  // 4. Obtener pagos pendientes (Dashboard Manager con detalles de emisor)
   async getPendingTransactions(managerId: string) {
-    // Aquí deberíamos filtrar por los parkings del manager, 
-    // pero para el MVP asumimos que el manager ve todo o filtramos después.
     return await prisma.transaction.findMany({
       where: { status: 'PENDING' },
       include: { 
-        // ✅ CORRECCIÓN 2: Cambiado 'name' por 'firstName' y 'lastName' (UserSelect)
         user: { 
           select: { 
             email: true, 
@@ -157,7 +149,7 @@ export const paymentService = {
     });
   },
 
-  // 5. Historial de pagos del usuario (Conductor)
+  // 5. Historial de pagos del usuario
   async getUserHistory(userId: string) {
     return await prisma.transaction.findMany({
       where: { userId },
@@ -177,25 +169,22 @@ export const paymentService = {
     });
   },
 
-  // 6. Estadísticas de Ingresos (Para Dashboard del Manager)
+  // 6. Estadísticas de Ingresos
   async getRevenueStats(managerId: string) {
-    // A. Calcular Ingreso Total Confirmado (Suma de amountInUsd)
-    // Filtramos transacciones donde la reserva pertenece a un parking de este manager
     const totalRevenue = await prisma.transaction.aggregate({
       _sum: {
         amountInUsd: true
       },
       where: {
-        status: 'VERIFIED', // Solo dinero real verificado
+        status: 'VERIFIED',
         reservation: {
           parking: {
-            managerId: managerId // Filtro de seguridad: solo sus estacionamientos
+            managerId: managerId
           }
         }
       }
     });
 
-    // B. Conteo por Estado (Para saber cuántos pagos hay pendientes)
     const statusCounts = await prisma.transaction.groupBy({
       by: ['status'],
       where: {
@@ -208,7 +197,6 @@ export const paymentService = {
       }
     });
 
-    // C. Conteo por Método de Pago (Para saber qué usan más: Binance, Pago Móvil?)
     const methodCounts = await prisma.transaction.groupBy({
       by: ['method'],
       where: {

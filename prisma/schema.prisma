@@ -268,6 +268,11 @@ model Transaction {
   // Para guardar detalles específicos (ej. email de binance, titular zelle)
   metadata      Json?
 
+  // Datos de conciliación del emisor
+  senderBank    String?   // Ej: Banesco, Mercantil
+  senderPhone   String?   // Teléfono origen (Opcional según tu requerimiento)
+  senderEmail   String?   // Email del pagador (opcional)
+
   // Relaciones
   reservationId String
   reservation   Reservation   @relation(fields: [reservationId], references: [id])
