@@ -12,6 +12,8 @@ import { paymentRoutes } from './routes/payment.routes';
 import { loyaltyRoutes } from './routes/loyalty.routes';
 import { analyticsRoutes } from './routes/analytics.routes';
 import { cronService } from './services/cron.service';
+import { wsGateway } from './websockets/ws.gateway';
+import { wsService } from './services/ws.service';
 
 export async function buildApp() {
   // Detectar si estamos en producción
@@ -115,6 +117,12 @@ export async function buildApp() {
 
   // Registrar analytics
   await app.register(analyticsRoutes, { prefix: '/api/analytics' });
+
+  // WebSocket Gateway
+  await app.register(wsGateway);
+
+  // Inicializar el subscriber de Redis para WS
+  await wsService.initialize();
   
   return app;
 }

@@ -3,6 +3,7 @@ import prisma from '../config/database';
 import { CreateTransactionDTO, VerifyTransactionDTO } from '../types/payment.types';
 import { loyaltyService } from './loyalty.service';
 import { emailService } from './email.service';
+import { wsService } from './ws.service';
 
 export const paymentService = {
   // 1. Usuario reporta un pago (Pago Móvil, Transferencia, etc.)
@@ -97,29 +98,69 @@ export const paymentService = {
   async verifyTransaction(data: VerifyTransactionDTO) {
     const transaction = await prisma.transaction.findUnique({
       where: { id: data.transactionId },
-      include: { reservation: true }
+      include: {
+        reservation: true,
+        user: true,
+      },
     });
 
     if (!transaction) throw new Error('Transacción no encontrada');
+    if (transaction.status !== 'PENDING') {
+      throw new Error(`Esta transacción ya fue procesada (estado: ${transaction.status})`);
+    }
 
     const updatedTransaction = await prisma.transaction.update({
       where: { id: data.transactionId },
       data: {
         status: data.status,
         verifiedBy: data.managerId,
-        verifiedAt: new Date()
-      }
+        verifiedAt: new Date(),
+      },
     });
 
+    // Solo modificar la reserva si está en PENDING (el usuario aún no hizo check-in)
+    // Si ya está ACTIVE o COMPLETED, el pago se verifica en caliente — no se toca el estado
     if (data.status === 'VERIFIED') {
-      await prisma.reservation.update({
-        where: { id: transaction.reservationId },
-        data: {
-          status: ReservationStatus.ACTIVE
+      const reservationStatus = transaction.reservation.status;
+
+      if (reservationStatus === ReservationStatus.PENDING) {
+        // Flujo temprano: el manager aprobó antes del check-in → habilitar entrada
+        await prisma.reservation.update({
+          where: { id: transaction.reservationId },
+          data: { status: ReservationStatus.ACTIVE },
+        });
+      }
+      // Si es ACTIVE o COMPLETED → no hacer nada, el usuario ya está/estuvo adentro
+
+      // Enviar recibo por email
+      try {
+        if (transaction.user?.email) {
+          await emailService.sendPaymentReceipt(
+            transaction.user.email,
+            transaction.user.firstName,
+            Number(transaction.amount),
+            transaction.currency,
+            transaction.referenceId,
+          );
         }
-      });
+      } catch (err) {
+        console.error('⚠️ Error enviando recibo de pago:', err);
+      }
     }
-    
+
+    // 🔔 Notificar al usuario por WebSocket (VERIFIED o REJECTED)
+    try {
+      await wsService.notifyPaymentStatus(transaction.userId, {
+        transactionId: transaction.id,
+        status: data.status,
+        reservationId: transaction.reservationId,
+        amount: Number(transaction.amount),
+        currency: transaction.currency,
+      });
+    } catch (err) {
+      console.error('⚠️ WS: Error notificando estado de pago:', err);
+    }
+
     return updatedTransaction;
   },
 

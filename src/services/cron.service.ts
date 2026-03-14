@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import prisma from '../config/database';
 import { emailService } from './email.service';
 import { cacheService } from './cache.service';
+import { wsService } from './ws.service';
 
 export const cronService = {
   
@@ -66,6 +67,19 @@ export const cronService = {
           // 💥 REDIS: Invalidar caché para reflejar disponibilidad
           if (res.parkingId) {
               await cacheService.del(`spaces:availability:${res.parkingId}`);
+          }
+
+          // 🔔 Notificar disponibilidad en tiempo real (mapa en vivo)
+          try {
+            if (res.parkingId) {
+              await wsService.notifySpaceAvailability(res.parkingId, {
+                parkingId: res.parkingId,
+                spaceId: res.spaceId,
+                status: 'AVAILABLE',
+              });
+            }
+          } catch (err) {
+            console.error('⚠️ WS: Error notificando disponibilidad:', err);
           }
         } catch (error) {
           console.error(`❌ Error procesando expiración de reserva ${res.id}`, error);
@@ -165,6 +179,18 @@ export const cronService = {
               where: { id: res.id },
               data: { expirationWarningSent: true }
             });
+
+            // 🔔 Alerta en tiempo real además del email
+            try {
+              await wsService.notifyReservationExpiring(res.userId, {
+                reservationId: res.id,
+                parkingName: res.parking.name,
+                minutesLeft: 15,
+                estimatedEndTime: res.estimatedEndTime.toISOString(),
+              });
+            } catch (err) {
+              console.error('⚠️ WS: Error notificando expiración próxima:', err);
+            }
             
           } catch (error) {
             console.error(`❌ Error enviando alerta a ${res.user.email}`, error);

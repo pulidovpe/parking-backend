@@ -9,6 +9,7 @@ import { loyaltyService } from './loyalty.service';
 import { PointSource } from '@prisma/client';
 import { emailService } from '../services/email.service';
 import { cacheService } from './cache.service';
+import { wsService } from './ws.service';
 
 export class ReservationService {
   
@@ -151,6 +152,18 @@ export class ReservationService {
     });
 
     await cacheService.del(`spaces:availability:${reservation.parkingId}`);
+
+    // 🔔 Notificar por WebSocket
+    try {
+      await wsService.notifyReservationStatus(userId, {
+        reservationId: id,
+        status: 'ACTIVE',
+        parkingName: updated.parking.name,
+      });
+    } catch (err) {
+      console.error('⚠️ WS: Error notificando activación de reserva:', err);
+    }
+
     return updated;
   }
 
@@ -210,6 +223,17 @@ export class ReservationService {
     });
 
     await cacheService.del(`spaces:availability:${reservation.parkingId}`);
+
+    // 🔔 Notificar por WebSocket
+    try {
+      await wsService.notifyReservationStatus(userId, {
+        reservationId: id,
+        status: 'COMPLETED',
+      });
+    } catch (err) {
+      console.error('⚠️ WS: Error notificando completación de reserva:', err);
+    }
+
     return updated;
   }
 
@@ -242,6 +266,17 @@ export class ReservationService {
     }
 
     await cacheService.del(`spaces:availability:${reservation.parkingId}`);
+    
+    // 🔔 Notificar por WebSocket
+    try {
+      await wsService.notifyReservationStatus(userId, {
+        reservationId: id,
+        status: 'CANCELLED',
+      });
+    } catch (err) {
+      console.error('⚠️ WS: Error notificando cancelación de reserva:', err);
+    }
+
     return updated;
   }
 
